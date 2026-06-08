@@ -89,6 +89,20 @@ RSpec.describe SyntageSdk::Configuration do
     end
   end
 
+  describe 'writable timeouts' do
+    it 'allows overriding the read timeout' do
+      configuration.timeout = 5
+
+      expect(configuration.timeout).to eq(5)
+    end
+
+    it 'allows overriding the open timeout' do
+      configuration.open_timeout = 2
+
+      expect(configuration.open_timeout).to eq(2)
+    end
+  end
+
   describe '#headers' do
     it 'includes the X-API-Key authentication header' do
       configuration.api_key = 'sk_live_abc'

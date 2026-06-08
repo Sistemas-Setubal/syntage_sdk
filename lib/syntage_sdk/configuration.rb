@@ -9,16 +9,42 @@ module SyntageSdk
     DEFAULT_TIMEOUT = 30
     DEFAULT_OPEN_TIMEOUT = 10
 
-    attr_accessor :api_key, :timeout, :open_timeout
-    attr_reader :environment
-    attr_writer :base_url
-
     def initialize
-      @api_key = ENV.fetch 'SYNTAGE_API_KEY', nil
+      @settings = {
+        api_key: ENV.fetch('SYNTAGE_API_KEY', nil),
+        base_url: nil,
+        timeout: DEFAULT_TIMEOUT,
+        open_timeout: DEFAULT_OPEN_TIMEOUT
+      }
       self.environment = ENV.fetch 'SYNTAGE_ENV', DEFAULT_ENVIRONMENT
-      @base_url = nil
-      @timeout = DEFAULT_TIMEOUT
-      @open_timeout = DEFAULT_OPEN_TIMEOUT
+    end
+
+    def api_key
+      @settings[:api_key]
+    end
+
+    def api_key=(value)
+      @settings[:api_key] = value
+    end
+
+    def timeout
+      @settings[:timeout]
+    end
+
+    def timeout=(value)
+      @settings[:timeout] = value
+    end
+
+    def open_timeout
+      @settings[:open_timeout]
+    end
+
+    def open_timeout=(value)
+      @settings[:open_timeout] = value
+    end
+
+    def environment
+      @settings[:environment]
     end
 
     def environment=(value)
@@ -30,11 +56,15 @@ module SyntageSdk
               "Valid environments: #{ENVIRONMENT_URLS.keys.join ', '}."
       end
 
-      @environment = env
+      @settings[:environment] = env
+    end
+
+    def base_url=(value)
+      @settings[:base_url] = value
     end
 
     def base_url
-      @base_url || ENVIRONMENT_URLS.fetch(environment)
+      @settings[:base_url] || ENVIRONMENT_URLS.fetch(environment)
     end
 
     def headers
