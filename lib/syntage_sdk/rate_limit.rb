@@ -22,7 +22,9 @@ module SyntageSdk
     end
 
     def exceeded?
-      remaining ? remaining <= 0 : false
+      return false unless remaining
+
+      remaining <= 0
     end
   end
 end
