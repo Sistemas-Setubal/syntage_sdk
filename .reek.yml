@@ -1,5 +1,13 @@
 directories:
   "/":
+    Attribute:
+      exclude:
+        - SyntageSdk::Configuration
+
+    TooManyInstanceVariables:
+      exclude:
+        - SyntageSdk::Configuration
+
     IrresponsibleModule:
       enabled: false
 
