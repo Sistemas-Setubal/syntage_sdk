@@ -1,0 +1,150 @@
+require 'syntage_sdk'
+
+RSpec.describe SyntageSdk::Client do
+  subject(:client) { described_class.new configuration }
+
+  let :configuration do
+    config = SyntageSdk::Configuration.new
+    config.api_key = 'sk_test_123'
+    config.base_url = 'https://api.example.com'
+    config
+  end
+
+  def http_response(status, body: nil, headers: {})
+    instance_double \
+      HTTParty::Response, code: status, parsed_response: body, headers: headers
+  end
+
+  before { allow(client).to receive(:sleep) }
+
+  describe 'on a successful response' do
+    let :response do
+      http_response 200,
+                    body: { 'id' => 'tp_1' },
+                    headers: { 'X-Request-ID' => 'req-1', 'X-RateLimit-Remaining' => '59' }
+    end
+
+    before { allow(HTTParty).to receive(:get).and_return(response) }
+
+    it 'returns a wrapped response with the parsed body' do
+      expect(client.get('taxpayers').body).to eq('id' => 'tp_1')
+    end
+
+    it 'exposes the request id from the headers' do
+      expect(client.get('taxpayers').request_id).to eq('req-1')
+    end
+
+    it 'exposes the rate limit from the headers' do
+      expect(client.get('taxpayers').rate_limit.remaining).to eq(59)
+    end
+
+    it 'builds the full URL from the base URL and path' do
+      client.get '/taxpayers'
+
+      expect(HTTParty).to have_received(:get).with('https://api.example.com/taxpayers', anything)
+    end
+
+    it 'sends the configured authentication headers' do
+      client.get 'taxpayers'
+
+      expect(HTTParty).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('X-API-Key' => 'sk_test_123')))
+    end
+
+    it 'forwards query parameters' do
+      client.get 'taxpayers', query: { page: 2 }
+
+      expect(HTTParty).to have_received(:get)
+        .with(anything, hash_including(query: { page: 2 }))
+    end
+  end
+
+  describe 'when sending a body' do
+    let(:response) { http_response 201, body: { 'id' => 'tp_1' } }
+
+    before { allow(HTTParty).to receive(:post).and_return(response) }
+
+    it 'serializes the body as JSON' do
+      client.post 'taxpayers', body: { rfc: 'XAXX010101000' }
+
+      expect(HTTParty).to have_received(:post)
+        .with(anything, hash_including(body: '{"rfc":"XAXX010101000"}'))
+    end
+  end
+
+  describe 'when the API responds with 401' do
+    before do
+      allow(HTTParty).to receive(:get)
+        .and_return(http_response(401, headers: { 'X-Request-ID' => 'req-401' }))
+    end
+
+    it 'raises an AuthenticationError' do
+      expect { client.get('taxpayers') }.to raise_error(SyntageSdk::AuthenticationError)
+    end
+
+    it 'exposes the request id on the error' do
+      expect { client.get('taxpayers') }
+        .to raise_error(an_object_having_attributes(request_id: 'req-401'))
+    end
+
+    it 'does not retry' do
+      expect { client.get('taxpayers') }.to raise_error(SyntageSdk::AuthenticationError)
+      expect(HTTParty).to have_received(:get).once
+    end
+  end
+
+  describe 'when the API responds with 429' do
+    let :rate_limited do
+      http_response 429, headers: { 'X-RateLimit-Remaining' => '0', 'X-RateLimit-Reset' => '1606678044' }
+    end
+
+    describe 'and it keeps failing' do
+      before { allow(HTTParty).to receive(:get).and_return(rate_limited) }
+
+      it 'raises a RateLimitError after exhausting retries' do
+        expect { client.get('taxpayers') }.to raise_error(SyntageSdk::RateLimitError)
+      end
+
+      it 'retries up to max_retries times' do
+        expect { client.get('taxpayers') }.to raise_error(SyntageSdk::RateLimitError)
+        expect(HTTParty).to have_received(:get).exactly(3).times
+      end
+
+      it 'backs off exponentially between attempts' do
+        expect { client.get('taxpayers') }.to raise_error(SyntageSdk::RateLimitError)
+        expect(client).to have_received(:sleep).with(0.5).ordered
+        expect(client).to have_received(:sleep).with(1.0).ordered
+      end
+
+      it 'exposes the rate limit on the error' do
+        expect { client.get('taxpayers') }
+          .to raise_error(SyntageSdk::RateLimitError) { |error| expect(error.rate_limit.remaining).to eq(0) }
+      end
+    end
+
+    describe 'and it later succeeds' do
+      before do
+        allow(HTTParty).to receive(:get)
+          .and_return(rate_limited, http_response(200, body: { 'ok' => true }))
+      end
+
+      it 'returns the successful response' do
+        expect(client.get('taxpayers').body).to eq('ok' => true)
+      end
+
+      it 'stops retrying once it succeeds' do
+        client.get 'taxpayers'
+
+        expect(HTTParty).to have_received(:get).twice
+      end
+    end
+  end
+
+  describe 'when the API responds with another error status' do
+    before { allow(HTTParty).to receive(:get).and_return(http_response(500)) }
+
+    it 'raises a generic ApiError' do
+      expect { client.get('taxpayers') }.to raise_error(SyntageSdk::ApiError, /500/)
+    end
+  end
+end

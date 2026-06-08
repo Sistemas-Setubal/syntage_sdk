@@ -3,7 +3,9 @@ require_relative 'syntage_sdk/errors'
 require_relative 'syntage_sdk/headers'
 require_relative 'syntage_sdk/rate_limit'
 require_relative 'syntage_sdk/response_metadata'
+require_relative 'syntage_sdk/response'
 require_relative 'syntage_sdk/configuration'
+require_relative 'syntage_sdk/client'
 
 module SyntageSdk
   class << self
@@ -17,8 +19,13 @@ module SyntageSdk
       configuration
     end
 
+    def client
+      @client ||= Client.new
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
+      @client = nil
     end
   end
 end

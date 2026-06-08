@@ -33,12 +33,29 @@ RSpec.describe SyntageSdk do
     end
   end
 
+  describe '.client' do
+    it 'returns a Client instance' do
+      expect(described_class.client).to be_a(SyntageSdk::Client)
+    end
+
+    it 'memoizes the same instance across calls' do
+      expect(described_class.client).to equal(described_class.client)
+    end
+  end
+
   describe '.reset_configuration!' do
     it 'replaces the configuration with a fresh instance' do
       original = described_class.configuration
       described_class.reset_configuration!
 
       expect(described_class.configuration).not_to equal(original)
+    end
+
+    it 'discards the memoized client' do
+      original = described_class.client
+      described_class.reset_configuration!
+
+      expect(described_class.client).not_to equal(original)
     end
   end
 end
