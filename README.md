@@ -71,24 +71,60 @@ failures into exceptions.
 ```ruby
 client = SyntageSdk.client
 
-response = client.get('taxpayers', query: { page: 1 })
+response = client.get('entities', query: { page: 1 })
 response.body        # parsed JSON
 response.status      # 200
 response.request_id  # value of X-Request-ID
 response.rate_limit  # SyntageSdk::RateLimit
 
-client.post('taxpayers', body: { rfc: 'XAXX010101000' })
+client.post('entities', body: { name: 'Acme', type: 'company' })
 ```
+
+## Resources
+
+On top of the raw client, the SDK exposes resource objects that map domain
+actions to endpoints, so the calling app does not build paths or bodies by hand.
+
+### Entities
+
+Register a taxpayer (`company` or `person`) and, optionally, the datasources to
+extract for it.
+
+```ruby
+response = SyntageSdk.entities.create(
+  name: 'Acme SA de CV',
+  type: 'company',
+  datasources: [{ name: 'sat' }], # optional
+  rfc: 'XAXX010101000'            # optional
+)
+
+response.status      # 201
+response.body['id']  # the created entity id
+```
+
+`name` and `type` are required keyword arguments: omitting them raises an
+`ArgumentError` before any request is made. `rfc` and `datasources` are optional
+and only sent when provided. If `rfc` is omitted, extractions that need it stay
+in a waiting state until it is set.
+
+The valid `datasources` identifiers are not listed in the API reference; they are
+passed through as-is and validated by the API (a `400` comes back as a
+`SyntageSdk::ValidationError` with the details). `sat` is one known valid value.
 
 ### Errors and retries
 
 Non-success responses raise:
 
-| Status  | Exception                       | Behavior                                  |
-| ------- | ------------------------------- | ----------------------------------------- |
-| `401`   | `SyntageSdk::AuthenticationError` | Raised immediately                       |
-| `429`   | `SyntageSdk::RateLimitError`    | Retried (`max_retries`, default 2) before raising |
-| other   | `SyntageSdk::ApiError`          | Raised immediately                        |
+| Status        | Exception                         | Behavior                                  |
+| ------------- | --------------------------------- | ----------------------------------------- |
+| `400` / `422` | `SyntageSdk::ValidationError`     | Raised immediately                        |
+| `401`         | `SyntageSdk::AuthenticationError` | Raised immediately                        |
+| `403`         | `SyntageSdk::ForbiddenError`      | Raised immediately                        |
+| `429`         | `SyntageSdk::RateLimitError`      | Retried (`max_retries`, default 2) before raising |
+| other         | `SyntageSdk::ApiError`            | Raised immediately                        |
+
+Every API error carries the parsed response body in `error.body`, so the calling
+app can read the API's own explanation (e.g. the failed validation fields).
 
 `429` responses are retried with an exponential back-off. Once `max_retries` is
 exhausted the `RateLimitError` is raised so the client app can decide what to do.
@@ -97,7 +133,7 @@ exhausted the `RateLimitError` is raised so the client app can decide what to do
 SyntageSdk.configure { |config| config.max_retries = 3 }
 
 begin
-  SyntageSdk.client.get('taxpayers')
+  SyntageSdk.client.get('entities')
 rescue SyntageSdk::RateLimitError => error
   error.rate_limit.reset_at # when the quota frees up
 rescue SyntageSdk::AuthenticationError => error
@@ -138,8 +174,10 @@ rate_limit.exceeded?          # => false
 | -------------------------------- | ------------------------------------------------------- |
 | `SyntageSdk::Error`              | Base class for every SDK error                          |
 | `SyntageSdk::ConfigurationError` | Invalid configuration (e.g. missing `api_key`)          |
-| `SyntageSdk::ApiError`           | API failure; exposes `request_id` for traceability      |
+| `SyntageSdk::ApiError`           | API failure; exposes `request_id` and `body`            |
 | `SyntageSdk::AuthenticationError`| `401` response; an `ApiError` for invalid credentials   |
+| `SyntageSdk::ForbiddenError`     | `403` response; the API key lacks permission            |
+| `SyntageSdk::ValidationError`    | `400` / `422` response; invalid request data            |
 | `SyntageSdk::RateLimitError`     | `429` response; also exposes `rate_limit`               |
 
 Both `ApiError` and `RateLimitError` carry the response metadata:

@@ -4,10 +4,11 @@ module SyntageSdk
   class ConfigurationError < Error; end
 
   class ApiError < Error
-    attr_reader :metadata
+    attr_reader :metadata, :body
 
-    def initialize(message = nil, metadata: nil)
+    def initialize(message = nil, metadata: nil, body: nil)
       @metadata = metadata
+      @body = body
       super(message)
     end
 
@@ -17,6 +18,10 @@ module SyntageSdk
   end
 
   class AuthenticationError < ApiError; end
+
+  class ForbiddenError < ApiError; end
+
+  class ValidationError < ApiError; end
 
   class RateLimitError < ApiError
     def rate_limit
