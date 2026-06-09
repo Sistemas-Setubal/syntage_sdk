@@ -27,6 +27,24 @@ RSpec.describe 'SyntageSdk errors' do
     end
   end
 
+  describe SyntageSdk::ForbiddenError do
+    it 'is an ApiError' do
+      expect(described_class.new('forbidden')).to be_a(SyntageSdk::ApiError)
+    end
+  end
+
+  describe SyntageSdk::ValidationError do
+    it 'is an ApiError' do
+      expect(described_class.new('bad request')).to be_a(SyntageSdk::ApiError)
+    end
+
+    it 'exposes the response body so the caller sees what failed' do
+      error = described_class.new 'bad request', body: { 'message' => 'name is required' }
+
+      expect(error.body).to eq('message' => 'name is required')
+    end
+  end
+
   describe SyntageSdk::RateLimitError do
     subject(:error) { described_class.new 'Too Many Requests', metadata: metadata }
 

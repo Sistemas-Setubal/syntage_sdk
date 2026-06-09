@@ -6,6 +6,8 @@ require_relative 'syntage_sdk/response_metadata'
 require_relative 'syntage_sdk/response'
 require_relative 'syntage_sdk/configuration'
 require_relative 'syntage_sdk/client'
+require_relative 'syntage_sdk/resources/base_resource'
+require_relative 'syntage_sdk/resources/entities'
 
 module SyntageSdk
   class << self
@@ -21,6 +23,10 @@ module SyntageSdk
 
     def client
       @client ||= Client.new
+    end
+
+    def entities
+      Resources::Entities.new
     end
 
     def reset_configuration!

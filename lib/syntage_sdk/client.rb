@@ -5,9 +5,23 @@ require 'json'
 
 module SyntageSdk
   class Client
-    UNAUTHORIZED_MESSAGE = 'Syntage API authentication failed (401). Check your API key.'
-    RATE_LIMIT_MESSAGE = 'Syntage API rate limit exceeded (429).'
     RETRY_BACKOFF = 0.5
+
+    ERROR_CLASSES = {
+      400 => ValidationError,
+      401 => AuthenticationError,
+      403 => ForbiddenError,
+      422 => ValidationError,
+      429 => RateLimitError
+    }.freeze
+
+    STATUS_MESSAGES = {
+      400 => 'Syntage API rejected the request (400).',
+      401 => 'Syntage API authentication failed (401). Check your API key.',
+      403 => 'Syntage API forbidden (403). The API key lacks permission for this request.',
+      422 => 'Syntage API could not process the request (422).',
+      429 => 'Syntage API rate limit exceeded (429).'
+    }.freeze
 
     def initialize(configuration = SyntageSdk.configuration)
       @configuration = configuration
@@ -52,14 +66,19 @@ module SyntageSdk
       metadata = ResponseMetadata.from_headers normalize(response.headers)
       return build_response response, status, metadata if status.between? 200, 299
 
-      raise_error status, metadata
+      raise_error status, metadata, response.parsed_response
     end
 
-    def raise_error(status, metadata)
-      raise RateLimitError.new(RATE_LIMIT_MESSAGE, metadata: metadata) if status == 429
-      raise AuthenticationError.new(UNAUTHORIZED_MESSAGE, metadata: metadata) if status == 401
+    def raise_error(status, metadata, body)
+      error_class = ERROR_CLASSES.fetch status, ApiError
+      raise error_class.new(message_for(status, body), metadata: metadata, body: body)
+    end
 
-      raise ApiError.new("Unexpected Syntage API response (#{status}).", metadata: metadata)
+    def message_for(status, body)
+      base = STATUS_MESSAGES.fetch(status) { "Unexpected Syntage API response (#{status})." }
+      return base if body.nil?
+
+      "#{base} #{body}"
     end
 
     def build_response(response, status, metadata)

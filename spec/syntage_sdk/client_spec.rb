@@ -151,6 +151,37 @@ RSpec.describe SyntageSdk::Client do
     end
   end
 
+  describe 'when the API responds with 400' do
+    before do
+      allow(HTTParty).to receive(:post)
+        .and_return(http_response(400, body: { 'message' => 'name is required' }))
+    end
+
+    it 'raises a ValidationError' do
+      expect { client.post('entities', body: {}) }.to raise_error(SyntageSdk::ValidationError)
+    end
+
+    it 'includes the API detail in the message' do
+      expect { client.post('entities', body: {}) }.to raise_error(/name is required/)
+    end
+
+    it 'exposes the response body on the error' do
+      expect { client.post('entities', body: {}) }
+        .to raise_error(an_object_having_attributes(body: { 'message' => 'name is required' }))
+    end
+  end
+
+  describe 'when the API responds with 403' do
+    before do
+      allow(HTTParty).to receive(:post)
+        .and_return(http_response(403, body: { 'message' => 'Forbidden' }))
+    end
+
+    it 'raises a ForbiddenError' do
+      expect { client.post('entities', body: {}) }.to raise_error(SyntageSdk::ForbiddenError)
+    end
+  end
+
   describe 'when the API responds with another error status' do
     before { allow(HTTParty).to receive(:get).and_return(http_response(500)) }
 
