@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module SyntageSdk
   class Configuration
     ENVIRONMENT_URLS = {
       development: 'https://api.sandbox.syntage.com',
       production: 'https://api.syntage.com'
-    }.freeze
+    }
 
     DEFAULT_ENVIRONMENT = :production
     DEFAULT_TIMEOUT = 30

@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require 'httparty'
 require 'json'
 
 module SyntageSdk
   class Client
-    UNAUTHORIZED_MESSAGE = 'Syntage API authentication failed (401). Check your API key.'.freeze
-    RATE_LIMIT_MESSAGE = 'Syntage API rate limit exceeded (429).'.freeze
+    UNAUTHORIZED_MESSAGE = 'Syntage API authentication failed (401). Check your API key.'
+    RATE_LIMIT_MESSAGE = 'Syntage API rate limit exceeded (429).'
     RETRY_BACKOFF = 0.5
 
     def initialize(configuration = SyntageSdk.configuration)
