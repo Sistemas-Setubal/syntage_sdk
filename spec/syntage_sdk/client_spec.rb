@@ -129,7 +129,7 @@ RSpec.describe SyntageSdk::Client do
 
       it 'exposes the rate limit on the error' do
         expect { client.get('taxpayers') }
-          .to raise_error(SyntageSdk::RateLimitError) { |error| expect(error.rate_limit.remaining).to eq(0) }
+          .to raise_error(an_object_having_attributes(rate_limit: an_object_having_attributes(remaining: 0)))
       end
     end
 
