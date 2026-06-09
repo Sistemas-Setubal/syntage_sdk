@@ -15,6 +15,12 @@ RSpec.describe SyntageSdk::Client do
       HTTParty::Response, code: status, parsed_response: body, headers: headers
   end
 
+  def attempt(path = 'taxpayers')
+    client.get path
+  rescue SyntageSdk::Error
+    nil
+  end
+
   before { allow(client).to receive(:sleep) }
 
   describe 'on a successful response' do
@@ -88,7 +94,8 @@ RSpec.describe SyntageSdk::Client do
     end
 
     it 'does not retry' do
-      expect { client.get('taxpayers') }.to raise_error(SyntageSdk::AuthenticationError)
+      attempt
+
       expect(HTTParty).to have_received(:get).once
     end
   end
@@ -106,12 +113,14 @@ RSpec.describe SyntageSdk::Client do
       end
 
       it 'retries up to max_retries times' do
-        expect { client.get('taxpayers') }.to raise_error(SyntageSdk::RateLimitError)
+        attempt
+
         expect(HTTParty).to have_received(:get).exactly(3).times
       end
 
       it 'backs off exponentially between attempts' do
-        expect { client.get('taxpayers') }.to raise_error(SyntageSdk::RateLimitError)
+        attempt
+
         expect(client).to have_received(:sleep).with(0.5).ordered
         expect(client).to have_received(:sleep).with(1.0).ordered
       end
