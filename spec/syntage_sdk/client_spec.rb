@@ -119,10 +119,12 @@ RSpec.describe SyntageSdk::Client do
       end
 
       it 'backs off exponentially between attempts' do
+        delays = []
+        allow(client).to receive(:sleep) { |seconds| delays << seconds }
+
         attempt
 
-        expect(client).to have_received(:sleep).with(0.5).ordered
-        expect(client).to have_received(:sleep).with(1.0).ordered
+        expect(delays).to eq([0.5, 1.0])
       end
 
       it 'exposes the rate limit on the error' do
