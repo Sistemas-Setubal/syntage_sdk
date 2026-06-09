@@ -1,20 +1,24 @@
+# frozen_string_literal: true
+
 module SyntageSdk
   class Configuration
     ENVIRONMENT_URLS = {
       development: 'https://api.sandbox.syntage.com',
       production: 'https://api.syntage.com'
-    }.freeze
+    }
 
     DEFAULT_ENVIRONMENT = :production
     DEFAULT_TIMEOUT = 30
     DEFAULT_OPEN_TIMEOUT = 10
+    DEFAULT_MAX_RETRIES = 2
 
     def initialize
       @settings = {
         api_key: ENV.fetch('SYNTAGE_API_KEY', nil),
         base_url: nil,
         timeout: DEFAULT_TIMEOUT,
-        open_timeout: DEFAULT_OPEN_TIMEOUT
+        open_timeout: DEFAULT_OPEN_TIMEOUT,
+        max_retries: DEFAULT_MAX_RETRIES
       }
       self.environment = ENV.fetch 'SYNTAGE_ENV', DEFAULT_ENVIRONMENT
     end
@@ -41,6 +45,14 @@ module SyntageSdk
 
     def open_timeout=(value)
       @settings[:open_timeout] = value
+    end
+
+    def max_retries
+      @settings[:max_retries]
+    end
+
+    def max_retries=(value)
+      @settings[:max_retries] = value
     end
 
     def environment

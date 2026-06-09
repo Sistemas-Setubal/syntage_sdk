@@ -16,6 +16,8 @@ module SyntageSdk
     end
   end
 
+  class AuthenticationError < ApiError; end
+
   class RateLimitError < ApiError
     def rate_limit
       metadata&.rate_limit

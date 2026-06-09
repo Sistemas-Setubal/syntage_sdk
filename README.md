@@ -62,6 +62,49 @@ If you request the `headers` without having configured an `api_key`, a
 `SyntageSdk::ConfigurationError` is raised with a clear message, instead of
 failing later with a `401`.
 
+## Making requests
+
+The SDK ships an HTTP client (backed by HTTParty) that reuses the global
+configuration. It serializes JSON bodies, parses JSON responses and turns API
+failures into exceptions.
+
+```ruby
+client = SyntageSdk.client
+
+response = client.get('taxpayers', query: { page: 1 })
+response.body        # parsed JSON
+response.status      # 200
+response.request_id  # value of X-Request-ID
+response.rate_limit  # SyntageSdk::RateLimit
+
+client.post('taxpayers', body: { rfc: 'XAXX010101000' })
+```
+
+### Errors and retries
+
+Non-success responses raise:
+
+| Status  | Exception                       | Behavior                                  |
+| ------- | ------------------------------- | ----------------------------------------- |
+| `401`   | `SyntageSdk::AuthenticationError` | Raised immediately                       |
+| `429`   | `SyntageSdk::RateLimitError`    | Retried (`max_retries`, default 2) before raising |
+| other   | `SyntageSdk::ApiError`          | Raised immediately                        |
+
+`429` responses are retried with an exponential back-off. Once `max_retries` is
+exhausted the `RateLimitError` is raised so the client app can decide what to do.
+
+```ruby
+SyntageSdk.configure { |config| config.max_retries = 3 }
+
+begin
+  SyntageSdk.client.get('taxpayers')
+rescue SyntageSdk::RateLimitError => error
+  error.rate_limit.reset_at # when the quota frees up
+rescue SyntageSdk::AuthenticationError => error
+  error.request_id          # to report to support
+end
+```
+
 ## Response metadata
 
 From a response's headers you can read its identifier and rate limit status.
@@ -96,6 +139,7 @@ rate_limit.exceeded?          # => false
 | `SyntageSdk::Error`              | Base class for every SDK error                          |
 | `SyntageSdk::ConfigurationError` | Invalid configuration (e.g. missing `api_key`)          |
 | `SyntageSdk::ApiError`           | API failure; exposes `request_id` for traceability      |
+| `SyntageSdk::AuthenticationError`| `401` response; an `ApiError` for invalid credentials   |
 | `SyntageSdk::RateLimitError`     | `429` response; also exposes `rate_limit`               |
 
 Both `ApiError` and `RateLimitError` carry the response metadata:
