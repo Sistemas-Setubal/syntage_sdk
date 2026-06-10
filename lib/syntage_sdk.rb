@@ -7,8 +7,10 @@ require_relative 'syntage_sdk/response'
 require_relative 'syntage_sdk/configuration'
 require_relative 'syntage_sdk/client'
 require_relative 'syntage_sdk/resources/base_resource'
+require_relative 'syntage_sdk/resources/listable'
 require_relative 'syntage_sdk/resources/entities'
 require_relative 'syntage_sdk/resources/credentials'
+require_relative 'syntage_sdk/resources/events'
 
 module SyntageSdk
   class << self
@@ -32,6 +34,10 @@ module SyntageSdk
 
     def credentials
       Resources::Credentials.new
+    end
+
+    def events
+      Resources::Events.new
     end
 
     def reset_configuration!

@@ -27,8 +27,8 @@ module SyntageSdk
       @configuration = configuration
     end
 
-    def get(path, query: nil)
-      request { HTTParty.get url_for(path), request_options(query: query) }
+    def get(path, query: nil, headers: nil)
+      request { HTTParty.get url_for(path), request_options(query: query, headers: headers) }
     end
 
     def post(path, body: nil)
@@ -85,11 +85,18 @@ module SyntageSdk
       Response.new status: status, body: response.parsed_response, metadata: metadata
     end
 
-    def request_options(query: nil, body: nil)
-      result = { headers: @configuration.headers, timeout: @configuration.timeout }
+    def request_options(query: nil, body: nil, headers: nil)
+      result = { headers: merged_headers(headers), timeout: @configuration.timeout, format: :json }
       result[:query] = query if query
       result[:body] = JSON.generate(body) if body
       result
+    end
+
+    def merged_headers(headers)
+      base = @configuration.headers
+      return base unless headers
+
+      base.merge headers
     end
 
     def url_for(path)
