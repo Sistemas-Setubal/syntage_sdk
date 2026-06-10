@@ -63,6 +63,26 @@ RSpec.describe SyntageSdk::Client do
       expect(HTTParty).to have_received(:get)
         .with(anything, hash_including(query: { page: 2 }))
     end
+
+    it 'merges per-request headers over the configured ones' do
+      client.get 'events', headers: { 'Accept' => 'application/ld+json' }
+
+      expect(HTTParty).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('Accept' => 'application/ld+json')))
+    end
+
+    it 'keeps the configured headers when merging per-request ones' do
+      client.get 'events', headers: { 'Accept' => 'application/ld+json' }
+
+      expect(HTTParty).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('X-API-Key' => 'sk_test_123')))
+    end
+
+    it 'forces the JSON parser so non application/json bodies are parsed' do
+      client.get 'events'
+
+      expect(HTTParty).to have_received(:get).with(anything, hash_including(format: :json))
+    end
   end
 
   describe 'when sending a body' do

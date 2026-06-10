@@ -149,6 +149,56 @@ All arguments are required keyword arguments: omitting any raises an
 `ArgumentError` before any request is made. For e.firma the SDK uses
 `Base64.strict_encode64` (no line breaks), so do not pre-encode the inputs.
 
+### Events
+
+Events report the outcome of asynchronous operations (e.g. `file.created`,
+`credential.updated`), so the calling app can learn the result of work it
+triggered earlier. `events.list` queries the collection (`GET /events`) and
+returns a JSON-LD (Hydra) collection.
+
+```ruby
+response = SyntageSdk.events.list(
+  type: 'credential.updated',         # event type
+  taxpayer_id: 'XAXX010101000',       # filters by taxpayer.id
+  source: '/extractions/abc',         # source IRI
+  resource: '/credentials/xyz',       # resource IRI
+  created_at: { strictly_after: '2026-01-01', before: '2026-06-10' },
+  order: 'desc',                      # by createdAt
+  items_per_page: 50                  # default 20, max 1000
+)
+
+body = response.body
+body['hydra:totalItems'] # total number of events (offset paging only)
+body['hydra:member']     # the array of events
+body['hydra:view']       # navigation links (hydra:next / hydra:previous / first / last)
+```
+
+Every argument is optional; unknown keys are ignored. The `created_at` filter
+accepts any of `before`, `after`, `strictly_before`, `strictly_after`.
+
+Paging works in two styles. **Offset** (the default) uses `page` and exposes
+`hydra:totalItems`:
+
+```ruby
+SyntageSdk.events.list(items_per_page: 20, page: 2)
+```
+
+**Cursor** is opt-in with `cursor: true` (it sends the `X-Pagination-Style: cursor`
+header). It drops `hydra:totalItems`; navigate with the relative IRIs the API
+returns in `hydra:view` (`hydra:next` / `hydra:previous`), which already carry the
+cursor as query params:
+
+```ruby
+page1 = SyntageSdk.events.list(cursor: true, items_per_page: 20)
+next_iri = page1.body.dig('hydra:view', 'hydra:next')
+# => "/events?itemsPerPage=20&id[lt]=019eb204-..."
+
+page2 = SyntageSdk.client.get(next_iri, headers: { 'Accept' => 'application/ld+json' })
+```
+
+The `cursor_next` / `cursor_previous` keyword arguments are forwarded as query
+params for APIs that expect explicit cursor tokens.
+
 ### Errors and retries
 
 Non-success responses raise:
