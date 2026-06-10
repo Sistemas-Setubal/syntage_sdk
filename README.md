@@ -111,6 +111,44 @@ The valid `datasources` identifiers are not listed in the API reference; they ar
 passed through as-is and validated by the API (a `400` comes back as a
 `SyntageSdk::ValidationError` with the details). `sat` is one known valid value.
 
+### Credentials
+
+Register SAT credentials for a taxpayer so the API can extract their data. There
+are two types, each with its own method; both `POST` to `/credentials` and return
+`202` (the credential is created with `status: "pending"` while the SAT validates
+it asynchronously).
+
+**CIEC** — RFC plus the CIEC password:
+
+```ruby
+response = SyntageSdk.credentials.create_ciec(
+  rfc: 'LSI240429PHA',
+  password: 'your-ciec-password'
+)
+
+response.status     # 202
+response.body['id'] # the created credential id
+```
+
+**e.firma** — the FIEL certificate (`.cer`) and private key (`.key`) plus their
+password. Pass the **raw file bytes**; the SDK base64-encodes them for you (the
+API requires base64, a detail not stated in its reference):
+
+```ruby
+response = SyntageSdk.credentials.create_efirma(
+  certificate: File.binread('lsi240429pha.cer'),
+  private_key: File.binread('Claveprivada_FIEL.key'),
+  password: 'your-efirma-password'
+)
+
+response.status     # 202
+response.body['rfc'] # derived from the certificate
+```
+
+All arguments are required keyword arguments: omitting any raises an
+`ArgumentError` before any request is made. For e.firma the SDK uses
+`Base64.strict_encode64` (no line breaks), so do not pre-encode the inputs.
+
 ### Errors and retries
 
 Non-success responses raise:
