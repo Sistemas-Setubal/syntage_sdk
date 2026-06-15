@@ -4,6 +4,8 @@ module SyntageSdk
   module Resources
     class Insights
       class Metrics < BaseResource
+        include DateRange
+
         BASE = 'insights/metrics'
         FORMAT_HEADER = 'X-Insight-Format'
 
@@ -34,10 +36,6 @@ module SyntageSdk
 
         def path(segment)
           "entities/#{entity_id}/#{BASE}/#{segment}"
-        end
-
-        def date_range(options)
-          { 'options[from]' => options[:from], 'options[to]' => options[:to] }.compact
         end
 
         def insight_format(options)
