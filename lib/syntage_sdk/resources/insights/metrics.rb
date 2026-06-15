@@ -12,23 +12,32 @@ module SyntageSdk
           @entity_id = entity_id
         end
 
-        def balance_sheet(format: nil, from: nil, to: nil)
-          client.get path('balance-sheet'), query: date_range(from, to), headers: insight_format(format)
+        def balance_sheet(**options)
+          statement 'balance-sheet', options
+        end
+
+        def income_statement(**options)
+          statement 'income-statement', options
         end
 
         private
 
         attr_reader :entity_id
 
+        def statement(segment, options)
+          client.get path(segment), query: date_range(options), headers: insight_format(options)
+        end
+
         def path(segment)
           "entities/#{entity_id}/#{BASE}/#{segment}"
         end
 
-        def date_range(from, to)
-          { 'options[from]' => from, 'options[to]' => to }.compact
+        def date_range(options)
+          { 'options[from]' => options[:from], 'options[to]' => options[:to] }.compact
         end
 
-        def insight_format(format)
+        def insight_format(options)
+          format = options[:format]
           return unless format
 
           { FORMAT_HEADER => format.to_s }
