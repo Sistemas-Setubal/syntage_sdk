@@ -43,6 +43,12 @@ RSpec.describe SyntageSdk do
     end
   end
 
+  describe '.insights' do
+    it 'returns an Insights resource' do
+      expect(described_class.insights('ent_123')).to be_a(SyntageSdk::Resources::Insights)
+    end
+  end
+
   describe '.reset_configuration!' do
     it 'replaces the configuration with a fresh instance' do
       original = described_class.configuration
