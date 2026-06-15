@@ -4,7 +4,7 @@ module SyntageSdk
   module Resources
     class Insights
       class Metrics < BaseResource
-        include DateRange
+        include Options
 
         BASE = 'insights/metrics'
         FORMAT_HEADER = 'X-Insight-Format'
@@ -31,7 +31,7 @@ module SyntageSdk
         attr_reader :entity_id
 
         def statement(segment, options)
-          client.get path(segment), query: date_range(options), headers: insight_format(options)
+          client.get path(segment), query: options_query(options, :from, :to), headers: insight_format(options)
         end
 
         def path(segment)

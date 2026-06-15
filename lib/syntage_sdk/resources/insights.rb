@@ -3,7 +3,7 @@
 module SyntageSdk
   module Resources
     class Insights < BaseResource
-      include DateRange
+      include Options
 
       BASE = 'insights'
 
@@ -17,7 +17,11 @@ module SyntageSdk
       end
 
       def financial_ratios(**options)
-        client.get path('financial-ratios'), query: date_range(options)
+        client.get path('financial-ratios'), query: options_query(options, :from, :to)
+      end
+
+      def trial_balance(**options)
+        client.get path('trial-balance'), query: options_query(options, :from, :to, :periodicity)
       end
 
       private

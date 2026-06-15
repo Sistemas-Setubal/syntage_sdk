@@ -3,11 +3,11 @@
 module SyntageSdk
   module Resources
     class Insights
-      module DateRange
+      module Options
         private
 
-        def date_range(options)
-          { 'options[from]' => options[:from], 'options[to]' => options[:to] }.compact
+        def options_query(values, *keys)
+          keys.to_h { |key| ["options[#{key}]", values[key]] }.compact
         end
       end
     end
