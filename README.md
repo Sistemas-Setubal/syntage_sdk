@@ -199,6 +199,36 @@ page2 = SyntageSdk.client.get(next_iri, headers: { 'Accept' => 'application/ld+j
 The `cursor_next` / `cursor_previous` keyword arguments are forwarded as query
 params for APIs that expect explicit cursor tokens.
 
+### Insights
+
+Insights are entity-scoped, so they hang off `SyntageSdk.insights(entity_id)`.
+Sub-groups of the API live under it — financial **metrics** are reached through
+`.metrics`:
+
+```ruby
+insights = SyntageSdk.insights('a1fbec32-...')   # bind the entity once
+
+response = insights.metrics.balance_sheet         # GET .../insights/metrics/balance-sheet
+response.body['taxRegime']                        # => { "id" => 601 }
+response.body['data']                             # tree of categories (Activo, Pasivo, ...)
+```
+
+`balance_sheet` accepts optional arguments:
+
+```ruby
+insights.metrics.balance_sheet(
+  format: 2022,                       # X-Insight-Format header (year format: 2014 or 2022)
+  from: '2022-01-01T00:00:00Z',       # options[from] — filter by fiscal year (>=)
+  to:   '2024-12-31T23:59:59Z'        # options[to]   — filter by fiscal year (<=)
+)
+```
+
+The balance sheet is built per **year format**: `2014` (the default, sourced from
+annual tax-return transcript PDFs) and `2022` (sourced from financial-statement
+XLSXs). If an entity has no data in the default format, the API answers
+`400 "Invalid format"` (raised as `SyntageSdk::ValidationError`) — pass
+`format: 2022` to select the XLSX format instead.
+
 ### Errors and retries
 
 Non-success responses raise:
