@@ -66,4 +66,16 @@ RSpec.describe SyntageSdk::Resources::Insights::Metrics do
   describe '#income_statement' do
     it_behaves_like 'a financial statement metric', :income_statement, 'income-statement'
   end
+
+  describe '#scores' do
+    it 'gets the entity-scoped scores metric path' do
+      metrics.scores
+
+      expect(client).to have_received(:get).with('entities/ent_123/insights/metrics/scores')
+    end
+
+    it 'returns the client response' do
+      expect(metrics.scores).to be(response)
+    end
+  end
 end
