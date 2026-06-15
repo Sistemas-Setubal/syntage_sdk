@@ -231,6 +231,13 @@ XLSXs). If an entity has no data in the default format, the API answers
 `400 "Invalid format"` (raised as `SyntageSdk::ValidationError`) — pass
 `format: 2022` to select the XLSX format instead.
 
+`scores` takes no arguments — it aggregates the entity's scores from every
+configured source (Syntage Score and any third-party providers):
+
+```ruby
+insights.metrics.scores            # GET .../insights/metrics/scores
+```
+
 ### Errors and retries
 
 Non-success responses raise:

@@ -20,6 +20,10 @@ module SyntageSdk
           statement 'income-statement', options
         end
 
+        def scores
+          client.get path('scores')
+        end
+
         private
 
         attr_reader :entity_id
