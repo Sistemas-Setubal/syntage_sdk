@@ -289,6 +289,23 @@ next_iri = page1.body.dig('hydra:view', 'hydra:next')
 page2 = SyntageSdk.client.get(next_iri, headers: { 'Accept' => 'application/ld+json' })
 ```
 
+`scores` takes no arguments — it aggregates the entity's scores from every
+configured source (Syntage Score and any third-party providers):
+
+```ruby
+insights.metrics.scores            # GET .../insights/metrics/scores
+```
+
+Some insights live directly under `/insights/` (not `metrics`), so they hang off
+`insights` itself. `financial_ratios` returns liquidity, leverage, profitability,
+and efficiency ratios per fiscal year, and accepts the same `from:` / `to:`
+date filters (no `format:`):
+
+```ruby
+insights.financial_ratios                                  # GET .../insights/financial-ratios
+insights.financial_ratios(from: '2022-01-01T00:00:00Z')    # options[from]
+```
+
 ### Errors and retries
 
 Non-success responses raise:
