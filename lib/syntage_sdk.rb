@@ -11,6 +11,7 @@ require_relative 'syntage_sdk/resources/listable'
 require_relative 'syntage_sdk/resources/entities'
 require_relative 'syntage_sdk/resources/credentials'
 require_relative 'syntage_sdk/resources/events'
+require_relative 'syntage_sdk/resources/invoices'
 
 module SyntageSdk
   class << self
@@ -38,6 +39,10 @@ module SyntageSdk
 
     def events
       Resources::Events.new
+    end
+
+    def invoices
+      Resources::Invoices.new
     end
 
     def reset_configuration!

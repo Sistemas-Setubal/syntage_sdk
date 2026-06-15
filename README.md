@@ -199,6 +199,96 @@ page2 = SyntageSdk.client.get(next_iri, headers: { 'Accept' => 'application/ld+j
 The `cursor_next` / `cursor_previous` keyword arguments are forwarded as query
 params for APIs that expect explicit cursor tokens.
 
+### Invoices
+
+Query the SAT invoices that belong to an entity (`GET /entities/:id/invoices`).
+The response is a JSON-LD (Hydra) collection.
+
+```ruby
+response = SyntageSdk.invoices.list(
+  entity_id: 'a1fd8884-339d-4b4a-ba8f-9bb1231dddc9', # required
+  type:            'I',               # I · E · P · N · T
+  status:          'VIGENTE',         # VIGENTE · CANCELADO
+  payment_method:  'PUE',            # PUE · PPD
+  issuer_rfc:      'XAXX010101000',
+  is_issuer:       true,
+  currency:        'MXN',
+  has_xml:         true,
+  issued_at:       { after: '2026-01-01', before: '2026-06-01' },
+  total:           { gte: 1000 },
+  order:           { issued_at: 'desc' },
+  items_per_page:  50
+)
+
+body = response.body
+body['hydra:totalItems'] # total invoices (offset paging only)
+body['hydra:member']     # array of invoices
+body['hydra:view']       # navigation links
+```
+
+`entity_id` is required; every other argument is optional. Unknown keys are
+ignored.
+
+**Filters** — all mapped to their camelCase API equivalents:
+
+| Ruby key | API param |
+| --- | --- |
+| `uuid` | `uuid` |
+| `version` | `version` |
+| `type` | `type` |
+| `usage` | `usage` |
+| `payment_type` | `paymentType` |
+| `payment_method` | `paymentMethod` |
+| `issuer_rfc` / `issuer_name` / `issuer_tax_regime` / `issuer_blacklist_status` | `issuer.*` |
+| `is_issuer` | `isIssuer` |
+| `receiver_rfc` / `receiver_name` / `receiver_blacklist_status` | `receiver.*` |
+| `is_receiver` | `isReceiver` |
+| `currency` | `currency` |
+| `status` | `status` |
+| `pac` | `pac` |
+| `cancellation_status` / `cancellation_status_process` | `cancellationStatus*` |
+| `has_xml` / `has_pdf` | `hasXml` / `hasPdf` |
+| `exists_payment_method` | `exists[paymentMethod]` |
+| `id_lt` / `id_gt` | `id[lt]` / `id[gt]` |
+
+**Date filters** — `issued_at`, `canceled_at`, `updated_at`, `certified_at`,
+`last_payment_date`, `fully_paid_at`, and `created_at` each accept a hash with
+any of `before`, `strictly_before`, `after`, `strictly_after`:
+
+```ruby
+SyntageSdk.invoices.list(
+  entity_id: 'ent_123',
+  issued_at: { strictly_after: '2026-01-01', before: '2026-06-01' }
+)
+```
+
+**Numeric range filters** — `tax`, `discount`, `subtotal`, `total`,
+`paid_amount`, and `due_amount` accept a hash with any of `gt`, `gte`, `lt`,
+`lte`, `between`:
+
+```ruby
+SyntageSdk.invoices.list(entity_id: 'ent_123', total: { gte: 1000, lt: 50_000 })
+```
+
+**Ordering** — pass an `order:` hash with any of `issued_at`, `canceled_at`,
+`certified_at`, `amount`, each set to `'asc'` or `'desc'`:
+
+```ruby
+SyntageSdk.invoices.list(entity_id: 'ent_123', order: { issued_at: 'desc', amount: 'asc' })
+```
+
+This endpoint **only supports cursor pagination** — passing `page:` raises a
+`SyntageSdk::ValidationError`. The API always returns cursor links in
+`hydra:view`; navigate using the IRIs it provides:
+
+```ruby
+page1 = SyntageSdk.invoices.list(entity_id: 'ent_123', items_per_page: 20)
+next_iri = page1.body.dig('hydra:view', 'hydra:next')
+# => "/entities/ent_123/invoices?itemsPerPage=20&id%5Blt%5D=..."
+
+page2 = SyntageSdk.client.get(next_iri, headers: { 'Accept' => 'application/ld+json' })
+```
+
 ### Errors and retries
 
 Non-success responses raise:
