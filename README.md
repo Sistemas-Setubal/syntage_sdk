@@ -213,7 +213,7 @@ response.body['taxRegime']                        # => { "id" => 601 }
 response.body['data']                             # tree of categories (Activo, Pasivo, ...)
 ```
 
-`balance_sheet` accepts optional arguments:
+`balance_sheet` and `income_statement` take the same optional arguments:
 
 ```ruby
 insights.metrics.balance_sheet(
@@ -221,9 +221,11 @@ insights.metrics.balance_sheet(
   from: '2022-01-01T00:00:00Z',       # options[from] — filter by fiscal year (>=)
   to:   '2024-12-31T23:59:59Z'        # options[to]   — filter by fiscal year (<=)
 )
+
+insights.metrics.income_statement(format: 2022)   # GET .../insights/metrics/income-statement
 ```
 
-The balance sheet is built per **year format**: `2014` (the default, sourced from
+Both statements are built per **year format**: `2014` (the default, sourced from
 annual tax-return transcript PDFs) and `2022` (sourced from financial-statement
 XLSXs). If an entity has no data in the default format, the API answers
 `400 "Invalid format"` (raised as `SyntageSdk::ValidationError`) — pass
