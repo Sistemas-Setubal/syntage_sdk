@@ -67,45 +67,36 @@ module SyntageSdk
       private
 
       def list_query(filter_map, options)
-        mapped_query(filter_map, options)
-          .merge(mapped_query(PAGINATION_PARAMS, options))
-          .merge(date_query(options.fetch(:created_at, {})))
+        super
           .merge(extra_date_queries(options))
-          .merge(numeric_range_query(options))
-          .merge(invoice_order_query(options[:order]))
+          .merge numeric_range_query(options)
+      end
+
+      def order_query(order)
+        return {} if order.nil?
+
+        order.slice(*ORDER_FIELDS.keys).compact.each_with_object({}) do |(key, value), query|
+          query["order[#{ORDER_FIELDS[key]}]"] = value
+        end
       end
 
       def extra_date_queries(options)
         EXTRA_DATE_FIELDS.each_with_object({}) do |(key, field), query|
-          dates = options.fetch(key, {})
-          DATE_FILTERS.each do |filter|
-            value = dates[filter]
-            next if value.nil?
-
-            query["#{field}[#{filter}]"] = value
-          end
+          query.merge! date_field_query(field, options.fetch(key, {}))
         end
       end
 
       def numeric_range_query(options)
         NUMERIC_FIELDS.each_with_object({}) do |(key, param), query|
-          ranges = options[key]
-          next if ranges.nil?
-
-          NUMERIC_OPERATORS.each do |op|
-            query["#{param}[#{op}]"] = ranges[op] unless ranges[op].nil?
-          end
+          query.merge! numeric_field_query(param, options[key])
         end
       end
 
-      def invoice_order_query(order)
-        return {} if order.nil?
+      def numeric_field_query(param, ranges)
+        return {} if ranges.nil?
 
-        ORDER_FIELDS.each_with_object({}) do |(key, param), query|
-          value = order[key]
-          next if value.nil?
-
-          query["order[#{param}]"] = value
+        ranges.slice(*NUMERIC_OPERATORS).compact.each_with_object({}) do |(op, value), query|
+          query["#{param}[#{op}]"] = value
         end
       end
     end

@@ -37,11 +37,12 @@ module SyntageSdk
       end
 
       def date_query(created_at)
-        DATE_FILTERS.each_with_object({}) do |filter, query|
-          value = created_at[filter]
-          next if value.nil?
+        date_field_query 'createdAt', created_at
+      end
 
-          query["createdAt[#{filter}]"] = value
+      def date_field_query(field, dates)
+        dates.slice(*DATE_FILTERS).compact.each_with_object({}) do |(filter, value), query|
+          query["#{field}[#{filter}]"] = value
         end
       end
 
