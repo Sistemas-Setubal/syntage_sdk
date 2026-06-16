@@ -174,6 +174,51 @@ RSpec.describe SyntageSdk::Resources::Insights do
     end
   end
 
+  describe '#invoicing_concentration' do
+    it 'gets the entity-scoped invoicing-concentration path' do
+      insights.invoicing_concentration type: 'issued'
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/invoicing-concentration', anything)
+    end
+
+    it 'sends type in the query' do
+      insights.invoicing_concentration type: 'issued'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[type]' => 'issued')))
+    end
+
+    it 'raises ArgumentError when type is missing' do
+      expect { insights.invoicing_concentration }.to raise_error(ArgumentError)
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.invoicing_concentration type: 'received', from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'maps to to the options[to] query param' do
+      insights.invoicing_concentration type: 'received', to: '2024-12-31T23:59:59Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      insights.invoicing_concentration type: 'issued', from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.invoicing_concentration(type: 'issued')).to be(response)
+    end
+  end
+
   describe '#summary' do
     it 'gets the entity-scoped summary path' do
       insights.summary

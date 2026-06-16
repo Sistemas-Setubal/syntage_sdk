@@ -36,6 +36,10 @@ module SyntageSdk
         client.get path('accounts-receivable'), query: options_query(options, :from, :to, :periodicity)
       end
 
+      def invoicing_concentration(type:, **options)
+        client.get path('invoicing-concentration'), query: options_query(options.merge(type:), :type, :from, :to)
+      end
+
       def summary
         client.get path('summary')
       end
