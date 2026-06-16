@@ -28,6 +28,10 @@ module SyntageSdk
         client.get path('cash-flow-stats'), query: options_query(options, :from, :to, :periodicity, :type)
       end
 
+      def accounts_payable(**options)
+        client.get path('accounts-payable'), query: options_query(options, :from, :to, :periodicity)
+      end
+
       private
 
       attr_reader :entity_id
