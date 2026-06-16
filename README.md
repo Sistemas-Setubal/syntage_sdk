@@ -289,6 +289,16 @@ next_iri = page1.body.dig('hydra:view', 'hydra:next')
 page2 = SyntageSdk.client.get(next_iri, headers: { 'Accept' => 'application/ld+json' })
 ```
 
+#### Retrieve a single invoice
+
+Fetch one invoice by its UUID (`GET /invoices/:id`). This endpoint is global —
+the UUID identifies the invoice directly, so no `entity_id` is required.
+
+```ruby
+response = SyntageSdk.invoices.retrieve('91106968-1abd-4d64-85c1-4e73d96fb997')
+response.body # the invoice as a JSON-LD resource
+```
+
 `scores` takes no arguments — it aggregates the entity's scores from every
 configured source (Syntage Score and any third-party providers):
 
