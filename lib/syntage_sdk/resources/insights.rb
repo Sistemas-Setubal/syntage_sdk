@@ -44,6 +44,10 @@ module SyntageSdk
         client.get path('sales-revenue'), query: options_query(options, :from, :to)
       end
 
+      def products_and_services_sold(**options)
+        client.get path('products-and-services-sold'), query: options_query(options, :from, :to)
+      end
+
       def summary
         client.get path('summary')
       end

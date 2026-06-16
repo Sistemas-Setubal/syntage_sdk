@@ -259,6 +259,46 @@ RSpec.describe SyntageSdk::Resources::Insights do
     end
   end
 
+  describe '#products_and_services_sold' do
+    it 'gets the entity-scoped products-and-services-sold path' do
+      insights.products_and_services_sold
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/products-and-services-sold', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      insights.products_and_services_sold
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.products_and_services_sold from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'maps to to the options[to] query param' do
+      insights.products_and_services_sold to: '2024-12-31T23:59:59Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      insights.products_and_services_sold from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.products_and_services_sold).to be(response)
+    end
+  end
+
   describe '#summary' do
     it 'gets the entity-scoped summary path' do
       insights.summary
