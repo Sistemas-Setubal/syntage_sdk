@@ -173,4 +173,16 @@ RSpec.describe SyntageSdk::Resources::Insights do
       expect(insights.accounts_receivable).to be(response)
     end
   end
+
+  describe '#summary' do
+    it 'gets the entity-scoped summary path' do
+      insights.summary
+
+      expect(client).to have_received(:get).with('entities/ent_123/insights/summary')
+    end
+
+    it 'returns the client response' do
+      expect(insights.summary).to be(response)
+    end
+  end
 end
