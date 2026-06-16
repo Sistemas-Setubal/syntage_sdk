@@ -48,6 +48,22 @@ module SyntageSdk
         client.get path('products-and-services-sold'), query: options_query(options, :from, :to)
       end
 
+      def products_and_services_bought(**options)
+        client.get path('products-and-services-bought'), query: options_query(options, :from, :to)
+      end
+
+      def expenditures(**options)
+        client.get path('expenditures'), query: options_query(options, :from, :to)
+      end
+
+      def customer_concentration(**options)
+        client.get path('customer-concentration'), query: options_query(options, :from, :to)
+      end
+
+      def supplier_concentration(**options)
+        client.get path('supplier-concentration'), query: options_query(options, :from, :to)
+      end
+
       def summary
         client.get path('summary')
       end

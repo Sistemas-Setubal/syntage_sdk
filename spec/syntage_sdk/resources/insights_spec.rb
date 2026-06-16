@@ -299,6 +299,166 @@ RSpec.describe SyntageSdk::Resources::Insights do
     end
   end
 
+  describe '#products_and_services_bought' do
+    it 'gets the entity-scoped products-and-services-bought path' do
+      insights.products_and_services_bought
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/products-and-services-bought', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      insights.products_and_services_bought
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.products_and_services_bought from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'maps to to the options[to] query param' do
+      insights.products_and_services_bought to: '2024-12-31T23:59:59Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      insights.products_and_services_bought from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.products_and_services_bought).to be(response)
+    end
+  end
+
+  describe '#expenditures' do
+    it 'gets the entity-scoped expenditures path' do
+      insights.expenditures
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/expenditures', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      insights.expenditures
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.expenditures from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'maps to to the options[to] query param' do
+      insights.expenditures to: '2024-12-31T23:59:59Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      insights.expenditures from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.expenditures).to be(response)
+    end
+  end
+
+  describe '#customer_concentration' do
+    it 'gets the entity-scoped customer-concentration path' do
+      insights.customer_concentration
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/customer-concentration', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      insights.customer_concentration
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.customer_concentration from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'maps to to the options[to] query param' do
+      insights.customer_concentration to: '2024-12-31T23:59:59Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      insights.customer_concentration from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.customer_concentration).to be(response)
+    end
+  end
+
+  describe '#supplier_concentration' do
+    it 'gets the entity-scoped supplier-concentration path' do
+      insights.supplier_concentration
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/supplier-concentration', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      insights.supplier_concentration
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.supplier_concentration from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'maps to to the options[to] query param' do
+      insights.supplier_concentration to: '2024-12-31T23:59:59Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      insights.supplier_concentration from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.supplier_concentration).to be(response)
+    end
+  end
+
   describe '#summary' do
     it 'gets the entity-scoped summary path' do
       insights.summary
