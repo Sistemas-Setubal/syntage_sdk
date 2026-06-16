@@ -40,6 +40,10 @@ module SyntageSdk
         client.get path('invoicing-concentration'), query: options_query(options.merge(type:), :type, :from, :to)
       end
 
+      def sales_revenue(**options)
+        client.get path('sales-revenue'), query: options_query(options, :from, :to)
+      end
+
       def summary
         client.get path('summary')
       end
