@@ -32,6 +32,10 @@ module SyntageSdk
         client.get path('accounts-payable'), query: options_query(options, :from, :to, :periodicity)
       end
 
+      def accounts_receivable(**options)
+        client.get path('accounts-receivable'), query: options_query(options, :from, :to, :periodicity)
+      end
+
       private
 
       attr_reader :entity_id
