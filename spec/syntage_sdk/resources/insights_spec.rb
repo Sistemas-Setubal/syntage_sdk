@@ -174,48 +174,9 @@ RSpec.describe SyntageSdk::Resources::Insights do
     end
   end
 
-  describe '#invoicing_concentration' do
-    it 'gets the entity-scoped invoicing-concentration path' do
-      insights.invoicing_concentration type: 'issued'
-
-      expect(client).to have_received(:get)
-        .with('entities/ent_123/insights/invoicing-concentration', anything)
-    end
-
-    it 'sends type in the query' do
-      insights.invoicing_concentration type: 'issued'
-
-      expect(client).to have_received(:get)
-        .with(anything, hash_including(query: hash_including('options[type]' => 'issued')))
-    end
-
-    it 'raises ArgumentError when type is missing' do
-      expect { insights.invoicing_concentration }.to raise_error(ArgumentError)
-    end
-
-    it 'maps from to the options[from] query param' do
-      insights.invoicing_concentration type: 'received', from: '2022-01-01T00:00:00Z'
-
-      expect(client).to have_received(:get)
-        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
-    end
-
-    it 'maps to to the options[to] query param' do
-      insights.invoicing_concentration type: 'received', to: '2024-12-31T23:59:59Z'
-
-      expect(client).to have_received(:get)
-        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
-    end
-
-    it 'omits date filters that are not given' do
-      insights.invoicing_concentration type: 'issued', from: '2022-01-01T00:00:00Z'
-
-      expect(client).to have_received(:get)
-        .with(anything, hash_including(query: hash_excluding('options[to]')))
-    end
-
-    it 'returns the client response' do
-      expect(insights.invoicing_concentration(type: 'issued')).to be(response)
+  describe '#concentration' do
+    it 'returns a concentration resource' do
+      expect(insights.concentration).to be_a(SyntageSdk::Resources::Insights::Concentration)
     end
   end
 
@@ -256,6 +217,52 @@ RSpec.describe SyntageSdk::Resources::Insights do
 
     it 'returns the client response' do
       expect(insights.sales_revenue).to be(response)
+    end
+  end
+
+  describe '#products' do
+    it 'returns a products resource' do
+      expect(insights.products).to be_a(SyntageSdk::Resources::Insights::Products)
+    end
+  end
+
+  describe '#expenditures' do
+    it 'gets the entity-scoped expenditures path' do
+      insights.expenditures
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/expenditures', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      insights.expenditures
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.expenditures from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'maps to to the options[to] query param' do
+      insights.expenditures to: '2024-12-31T23:59:59Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[to]' => '2024-12-31T23:59:59Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      insights.expenditures from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.expenditures).to be(response)
     end
   end
 

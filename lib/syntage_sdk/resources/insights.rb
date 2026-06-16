@@ -2,15 +2,10 @@
 
 module SyntageSdk
   module Resources
-    class Insights < BaseResource
+    class Insights < EntityScopedResource
       include Options
 
       BASE = 'insights'
-
-      def initialize(entity_id, client = SyntageSdk.client)
-        super(client)
-        @entity_id = entity_id
-      end
 
       def metrics
         Metrics.new entity_id, client
@@ -36,12 +31,20 @@ module SyntageSdk
         client.get path('accounts-receivable'), query: options_query(options, :from, :to, :periodicity)
       end
 
-      def invoicing_concentration(type:, **options)
-        client.get path('invoicing-concentration'), query: options_query(options.merge(type:), :type, :from, :to)
+      def concentration
+        Concentration.new entity_id, client
+      end
+
+      def products
+        Products.new entity_id, client
       end
 
       def sales_revenue(**options)
         client.get path('sales-revenue'), query: options_query(options, :from, :to)
+      end
+
+      def expenditures(**options)
+        client.get path('expenditures'), query: options_query(options, :from, :to)
       end
 
       def summary
@@ -49,8 +52,6 @@ module SyntageSdk
       end
 
       private
-
-      attr_reader :entity_id
 
       def path(segment)
         "entities/#{entity_id}/#{BASE}/#{segment}"

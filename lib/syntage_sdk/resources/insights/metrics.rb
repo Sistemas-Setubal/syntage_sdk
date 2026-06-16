@@ -3,16 +3,11 @@
 module SyntageSdk
   module Resources
     class Insights
-      class Metrics < BaseResource
+      class Metrics < EntityScopedResource
         include Options
 
         BASE = 'insights/metrics'
         FORMAT_HEADER = 'X-Insight-Format'
-
-        def initialize(entity_id, client = SyntageSdk.client)
-          super(client)
-          @entity_id = entity_id
-        end
 
         def balance_sheet(**options)
           statement 'balance-sheet', options
@@ -32,8 +27,6 @@ module SyntageSdk
         end
 
         private
-
-        attr_reader :entity_id
 
         def statement(segment, options)
           client.get path(segment), query: options_query(options, :from, :to), headers: insight_format(options)
