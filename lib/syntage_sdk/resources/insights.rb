@@ -24,6 +24,10 @@ module SyntageSdk
         client.get path('trial-balance'), query: options_query(options, :from, :to, :periodicity)
       end
 
+      def cash_flow_stats(**options)
+        client.get path('cash-flow-stats'), query: options_query(options, :from, :to, :periodicity, :type)
+      end
+
       private
 
       attr_reader :entity_id

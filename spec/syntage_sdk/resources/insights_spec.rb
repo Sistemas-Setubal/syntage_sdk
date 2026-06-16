@@ -85,4 +85,38 @@ RSpec.describe SyntageSdk::Resources::Insights do
       expect(insights.trial_balance).to be(response)
     end
   end
+
+  describe '#cash_flow_stats' do
+    it 'gets the entity-scoped cash-flow-stats path' do
+      insights.cash_flow_stats
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/cash-flow-stats', anything)
+    end
+
+    it 'maps type to the options[type] query param' do
+      insights.cash_flow_stats type: 'payment-method'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[type]' => 'payment-method')))
+    end
+
+    it 'maps periodicity to the options[periodicity] query param' do
+      insights.cash_flow_stats periodicity: 'weekly'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[periodicity]' => 'weekly')))
+    end
+
+    it 'omits filters that are not given' do
+      insights.cash_flow_stats type: 'total'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[from]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.cash_flow_stats).to be(response)
+    end
+  end
 end
