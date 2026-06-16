@@ -28,6 +28,10 @@ module SyntageSdk
       Resources::Events.new
     end
 
+    def invoices
+      Resources::Invoices.new
+    end
+
     def insights(entity_id)
       Resources::Insights.new entity_id
     end
