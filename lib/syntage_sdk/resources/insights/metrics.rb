@@ -26,6 +26,11 @@ module SyntageSdk
           client.get path('scores')
         end
 
+        def invoicing_annual_comparison(**options)
+          client.get path('invoicing-annual-comparison'), query: options_query(options, :from, :to),
+          headers: insight_format(options)
+        end
+
         private
 
         attr_reader :entity_id
