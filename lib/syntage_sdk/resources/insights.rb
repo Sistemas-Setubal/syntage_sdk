@@ -11,24 +11,8 @@ module SyntageSdk
         Metrics.new entity_id, client
       end
 
-      def financial_ratios(**options)
-        client.get path('financial-ratios'), query: options_query(options, :from, :to)
-      end
-
-      def trial_balance(**options)
-        client.get path('trial-balance'), query: options_query(options, :from, :to, :periodicity)
-      end
-
-      def cash_flow_stats(**options)
-        client.get path('cash-flow-stats'), query: options_query(options, :from, :to, :periodicity, :type)
-      end
-
-      def accounts_payable(**options)
-        client.get path('accounts-payable'), query: options_query(options, :from, :to, :periodicity)
-      end
-
-      def accounts_receivable(**options)
-        client.get path('accounts-receivable'), query: options_query(options, :from, :to, :periodicity)
+      def accounting
+        Accounting.new entity_id, client
       end
 
       def concentration
@@ -45,6 +29,30 @@ module SyntageSdk
 
       def expenditures(**options)
         client.get path('expenditures'), query: options_query(options, :from, :to)
+      end
+
+      def financial_institutions(**options)
+        client.get path('financial-institutions'), query: options_query(options, :from, :to)
+      end
+
+      def employees(**options)
+        client.get path('employees'), query: options_query(options, :from, :to)
+      end
+
+      def rpc_shareholders(**options)
+        client.get path('rpc-shareholders'), query: options_query(options, :from, :to)
+      end
+
+      def government_customers(**options)
+        client.get path('government-customers'), query: options_query(options, :from, :to)
+      end
+
+      def invoicing_blacklist(**options)
+        client.get path('invoicing-blacklist'), query: options_query(options, :from, :to)
+      end
+
+      def risks(**options)
+        client.get path('risks'), query: options_query(options, :from, :to)
       end
 
       def summary
