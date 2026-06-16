@@ -51,4 +51,38 @@ RSpec.describe SyntageSdk::Resources::Insights do
       expect(insights.financial_ratios).to be(response)
     end
   end
+
+  describe '#trial_balance' do
+    it 'gets the entity-scoped trial-balance path' do
+      insights.trial_balance
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/trial-balance', anything)
+    end
+
+    it 'maps periodicity to the options[periodicity] query param' do
+      insights.trial_balance periodicity: 'monthly'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[periodicity]' => 'monthly')))
+    end
+
+    it 'maps from to the options[from] query param' do
+      insights.trial_balance from: '2022-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2022-01-01T00:00:00Z')))
+    end
+
+    it 'omits filters that are not given' do
+      insights.trial_balance periodicity: 'monthly'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[from]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.trial_balance).to be(response)
+    end
+  end
 end

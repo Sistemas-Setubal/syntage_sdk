@@ -306,6 +306,14 @@ insights.financial_ratios                                  # GET .../insights/fi
 insights.financial_ratios(from: '2022-01-01T00:00:00Z')    # options[from]
 ```
 
+`trial_balance` returns the trial-balance accounts; besides `from:` / `to:` it
+accepts `periodicity:` (`yearly` — the default — or `monthly`):
+
+```ruby
+insights.trial_balance                                     # GET .../insights/trial-balance
+insights.trial_balance(periodicity: 'monthly')             # options[periodicity]
+```
+
 ### Errors and retries
 
 Non-success responses raise:
