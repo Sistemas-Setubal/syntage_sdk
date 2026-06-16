@@ -14,8 +14,10 @@ module SyntageSdk
         resource: 'resource'
       }.freeze
 
+      LIST = ListConfig.new(filters: FILTERS).freeze
+
       def list(**options)
-        list_collection PATH, FILTERS, options
+        list_collection PATH, LIST, options
       end
     end
   end

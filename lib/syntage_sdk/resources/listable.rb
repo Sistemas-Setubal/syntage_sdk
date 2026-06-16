@@ -14,17 +14,24 @@ module SyntageSdk
 
       DATE_FILTERS = %i[before after strictly_before strictly_after].freeze
 
+      NUMERIC_OPERATORS = %i[gt gte lt lte between].freeze
+
+      CREATED_AT = 'createdAt'
+
       private
 
-      def list_collection(path, filter_map, options)
-        client.get path, query: list_query(filter_map, options), headers: list_headers(options)
+      def list_collection(path, config, options)
+        client.get path, query: list_query(config, options), headers: list_headers(options)
       end
 
-      def list_query(filter_map, options)
-        mapped_query(filter_map, options)
+      def list_query(config, options)
+        date_fields = config.dates.merge created_at: CREATED_AT
+
+        mapped_query(config.filters, options)
           .merge(mapped_query(PAGINATION_PARAMS, options))
-          .merge(date_query(options.fetch(:created_at, {})))
-          .merge(order_query(options[:order]))
+          .merge(bracketed_query(date_fields, DATE_FILTERS, options))
+          .merge(bracketed_query(config.numeric, NUMERIC_OPERATORS, options))
+          .merge order_query(config.orders, options[:order])
       end
 
       def mapped_query(map, options)
@@ -36,20 +43,27 @@ module SyntageSdk
         end
       end
 
-      def date_query(created_at)
-        date_field_query 'createdAt', created_at
-      end
-
-      def date_field_query(field, dates)
-        dates.slice(*DATE_FILTERS).compact.each_with_object({}) do |(filter, value), query|
-          query["#{field}[#{filter}]"] = value
+      def bracketed_query(fields, operators, options)
+        fields.each_with_object({}) do |(key, param), query|
+          query.merge! field_operators(param, operators, options[key])
         end
       end
 
-      def order_query(order)
-        return {} if order.nil?
+      def field_operators(param, operators, operations)
+        return {} if operations.nil?
 
-        { 'order[createdAt]' => order }
+        operations.slice(*operators).compact.each_with_object({}) do |(operator, value), query|
+          query["#{param}[#{operator}]"] = value
+        end
+      end
+
+      def order_query(fields, order)
+        return {} if order.nil?
+        return { "order[#{CREATED_AT}]" => order } unless order.is_a? Hash
+
+        order.slice(*fields.keys).compact.each_with_object({}) do |(key, value), query|
+          query["order[#{fields[key]}]"] = value
+        end
       end
 
       def list_headers(options)

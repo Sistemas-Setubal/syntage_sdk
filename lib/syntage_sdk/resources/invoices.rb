@@ -43,8 +43,6 @@ module SyntageSdk
         due_amount:  'dueAmount'
       }.freeze
 
-      NUMERIC_OPERATORS = %i[gt gte lt lte between].freeze
-
       ORDER_FIELDS = {
         issued_at:    'issuedAt',
         canceled_at:  'canceledAt',
@@ -61,48 +59,19 @@ module SyntageSdk
         fully_paid_at:     'fullyPaidAt'
       }.freeze
 
+      LIST = ListConfig.new(
+        filters: FILTERS,
+        numeric: NUMERIC_FIELDS,
+        dates:   EXTRA_DATE_FIELDS,
+        orders:  ORDER_FIELDS
+      ).freeze
+
       def list(entity_id:, **options)
-        list_collection "entities/#{entity_id}/invoices", FILTERS, options
+        list_collection "entities/#{entity_id}/invoices", LIST, options
       end
 
       def retrieve(id)
         retrieve_resource "invoices/#{id}"
-      end
-
-      private
-
-      def list_query(filter_map, options)
-        super
-          .merge(extra_date_queries(options))
-          .merge numeric_range_query(options)
-      end
-
-      def order_query(order)
-        return {} if order.nil?
-
-        order.slice(*ORDER_FIELDS.keys).compact.each_with_object({}) do |(key, value), query|
-          query["order[#{ORDER_FIELDS[key]}]"] = value
-        end
-      end
-
-      def extra_date_queries(options)
-        EXTRA_DATE_FIELDS.each_with_object({}) do |(key, field), query|
-          query.merge! date_field_query(field, options.fetch(key, {}))
-        end
-      end
-
-      def numeric_range_query(options)
-        NUMERIC_FIELDS.each_with_object({}) do |(key, param), query|
-          query.merge! numeric_field_query(param, options[key])
-        end
-      end
-
-      def numeric_field_query(param, ranges)
-        return {} if ranges.nil?
-
-        ranges.slice(*NUMERIC_OPERATORS).compact.each_with_object({}) do |(op, value), query|
-          query["#{param}[#{op}]"] = value
-        end
       end
     end
   end
