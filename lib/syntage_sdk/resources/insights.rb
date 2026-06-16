@@ -36,6 +36,10 @@ module SyntageSdk
         client.get path('accounts-receivable'), query: options_query(options, :from, :to, :periodicity)
       end
 
+      def summary
+        client.get path('summary')
+      end
+
       private
 
       attr_reader :entity_id
