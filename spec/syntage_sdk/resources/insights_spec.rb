@@ -119,4 +119,31 @@ RSpec.describe SyntageSdk::Resources::Insights do
       expect(insights.cash_flow_stats).to be(response)
     end
   end
+
+  describe '#accounts_payable' do
+    it 'gets the entity-scoped accounts-payable path' do
+      insights.accounts_payable
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/accounts-payable', anything)
+    end
+
+    it 'maps periodicity to the options[periodicity] query param' do
+      insights.accounts_payable periodicity: 'quarterly'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[periodicity]' => 'quarterly')))
+    end
+
+    it 'omits filters that are not given' do
+      insights.accounts_payable periodicity: 'monthly'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[from]')))
+    end
+
+    it 'returns the client response' do
+      expect(insights.accounts_payable).to be(response)
+    end
+  end
 end
