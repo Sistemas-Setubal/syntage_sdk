@@ -4,6 +4,7 @@ module SyntageSdk
   module Resources
     class Invoices < BaseResource
       include Listable
+      include Retrievable
 
       FILTERS = {
         uuid:                        'uuid',
@@ -62,6 +63,10 @@ module SyntageSdk
 
       def list(entity_id:, **options)
         list_collection "entities/#{entity_id}/invoices", FILTERS, options
+      end
+
+      def retrieve(id)
+        retrieve_resource "invoices/#{id}"
       end
 
       private
