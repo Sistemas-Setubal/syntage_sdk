@@ -2,43 +2,64 @@
 
 module SyntageSdk
   module Resources
-    class Insights < BaseResource
+    class Insights < EntityScopedResource
       include Options
 
       BASE = 'insights'
-
-      def initialize(entity_id, client = SyntageSdk.client)
-        super(client)
-        @entity_id = entity_id
-      end
 
       def metrics
         Metrics.new entity_id, client
       end
 
-      def financial_ratios(**options)
-        client.get path('financial-ratios'), query: options_query(options, :from, :to)
+      def accounting
+        Accounting.new entity_id, client
       end
 
-      def trial_balance(**options)
-        client.get path('trial-balance'), query: options_query(options, :from, :to, :periodicity)
+      def concentration
+        Concentration.new entity_id, client
       end
 
-      def cash_flow_stats(**options)
-        client.get path('cash-flow-stats'), query: options_query(options, :from, :to, :periodicity, :type)
+      def products
+        Products.new entity_id, client
       end
 
-      def accounts_payable(**options)
-        client.get path('accounts-payable'), query: options_query(options, :from, :to, :periodicity)
+      def sales_revenue(**options)
+        client.get path('sales-revenue'), query: options_query(options, :from, :to)
       end
 
-      def accounts_receivable(**options)
-        client.get path('accounts-receivable'), query: options_query(options, :from, :to, :periodicity)
+      def expenditures(**options)
+        client.get path('expenditures'), query: options_query(options, :from, :to)
+      end
+
+      def financial_institutions(**options)
+        client.get path('financial-institutions'), query: options_query(options, :from, :to)
+      end
+
+      def employees(**options)
+        client.get path('employees'), query: options_query(options, :from, :to)
+      end
+
+      def rpc_shareholders(**options)
+        client.get path('rpc-shareholders'), query: options_query(options, :from, :to)
+      end
+
+      def government_customers(**options)
+        client.get path('government-customers'), query: options_query(options, :from, :to)
+      end
+
+      def invoicing_blacklist(**options)
+        client.get path('invoicing-blacklist'), query: options_query(options, :from, :to)
+      end
+
+      def risks(**options)
+        client.get path('risks'), query: options_query(options, :from, :to)
+      end
+
+      def summary
+        client.get path('summary')
       end
 
       private
-
-      attr_reader :entity_id
 
       def path(segment)
         "entities/#{entity_id}/#{BASE}/#{segment}"
