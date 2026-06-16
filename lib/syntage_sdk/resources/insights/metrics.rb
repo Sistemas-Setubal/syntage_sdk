@@ -21,6 +21,14 @@ module SyntageSdk
           client.get path('scores')
         end
 
+        def customer_network(**options)
+          client.get path('customer-network'), query: options_query(options, :from, :to)
+        end
+
+        def vendor_network(**options)
+          client.get path('vendor-network'), query: options_query(options, :from, :to)
+        end
+
         def invoicing_annual_comparison(**options)
           client.get path('invoicing-annual-comparison'), query: options_query(options, :from, :to),
           headers: insight_format(options)

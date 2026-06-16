@@ -79,6 +79,72 @@ RSpec.describe SyntageSdk::Resources::Insights::Metrics do
     end
   end
 
+  describe '#customer_network' do
+    it 'gets the entity-scoped customer-network path' do
+      metrics.customer_network
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/metrics/customer-network', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      metrics.customer_network
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      metrics.customer_network from: '2024-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2024-01-01T00:00:00Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      metrics.customer_network from: '2024-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(metrics.customer_network).to be(response)
+    end
+  end
+
+  describe '#vendor_network' do
+    it 'gets the entity-scoped vendor-network path' do
+      metrics.vendor_network
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/insights/metrics/vendor-network', anything)
+    end
+
+    it 'sends an empty query when no filters are given' do
+      metrics.vendor_network
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps from to the options[from] query param' do
+      metrics.vendor_network from: '2024-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[from]' => '2024-01-01T00:00:00Z')))
+    end
+
+    it 'omits date filters that are not given' do
+      metrics.vendor_network from: '2024-01-01T00:00:00Z'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'returns the client response' do
+      expect(metrics.vendor_network).to be(response)
+    end
+  end
+
   describe '#invoicing_annual_comparison' do
     it 'gets the entity-scoped invoicing-annual-comparison path' do
       metrics.invoicing_annual_comparison
