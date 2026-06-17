@@ -299,6 +299,30 @@ response = SyntageSdk.invoices.retrieve('91106968-1abd-4d64-85c1-4e73d96fb997')
 response.body # the invoice as a JSON-LD resource
 ```
 
+#### Retrieve an invoice's CFDI
+
+Fetch the CFDI of an invoice (`GET /invoices/:id/cfdi`) in one of three formats,
+selected with `format:` (default `:json`). The format drives the `Accept` header
+and how the response body comes back:
+
+| `format:` | `Accept` | `response.body` |
+| --- | --- | --- |
+| `:json` (default) | `application/json` | the CFDI parsed into a Hash |
+| `:xml` | `text/xml` | the original XML as a raw String |
+| `:pdf` | `application/pdf` | the PDF as raw bytes (String) |
+
+```ruby
+id = '91106968-1abd-4d64-85c1-4e73d96fb997'
+
+SyntageSdk.invoices.cfdi(id)               # => body is a Hash
+SyntageSdk.invoices.cfdi(id, format: :xml) # => body is the raw XML
+
+pdf = SyntageSdk.invoices.cfdi(id, format: :pdf)
+File.binwrite('invoice.pdf', pdf.body)
+```
+
+Any other `format:` raises `ArgumentError`.
+
 `scores` takes no arguments — it aggregates the entity's scores from every
 configured source (Syntage Score and any third-party providers):
 

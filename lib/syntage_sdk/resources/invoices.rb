@@ -5,6 +5,7 @@ module SyntageSdk
     class Invoices < BaseResource
       include Listable
       include Retrievable
+      include CfdiRetrievable
 
       FILTERS = {
         uuid:                        'uuid',
@@ -72,6 +73,10 @@ module SyntageSdk
 
       def retrieve(id)
         retrieve_resource "invoices/#{id}"
+      end
+
+      def cfdi(id, format: :json)
+        retrieve_cfdi "invoices/#{id}/cfdi", format
       end
     end
   end

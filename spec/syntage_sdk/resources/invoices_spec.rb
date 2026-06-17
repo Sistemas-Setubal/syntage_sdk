@@ -353,4 +353,44 @@ RSpec.describe SyntageSdk::Resources::Invoices do
       expect(invoices.retrieve(id)).to be(response)
     end
   end
+
+  describe '#cfdi' do
+    let(:id) { '91106968-1abd-4d64-85c1-4e73d96fb997' }
+
+    it 'gets the invoice cfdi path' do
+      invoices.cfdi id
+
+      expect(client).to have_received(:get).with("invoices/#{id}/cfdi", anything)
+    end
+
+    it 'requests the JSON representation by default' do
+      invoices.cfdi id
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: { 'Accept' => 'application/json' }))
+    end
+
+    it 'requests the original XML' do
+      invoices.cfdi id, format: :xml
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: { 'Accept' => 'text/xml' }))
+    end
+
+    it 'requests the PDF' do
+      invoices.cfdi id, format: :pdf
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: { 'Accept' => 'application/pdf' }))
+    end
+
+    it 'raises on an unsupported format without hitting the client' do
+      expect { invoices.cfdi id, format: :csv }.to raise_error(ArgumentError, /csv/)
+      expect(client).not_to have_received(:get)
+    end
+
+    it 'returns the client response' do
+      expect(invoices.cfdi(id)).to be(response)
+    end
+  end
 end
