@@ -36,6 +36,10 @@ module SyntageSdk
       Resources::Insights.new entity_id
     end
 
+    def rug(entity_id)
+      Resources::Rug.new entity_id
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil
