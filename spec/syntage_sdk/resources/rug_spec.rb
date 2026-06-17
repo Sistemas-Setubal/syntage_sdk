@@ -46,6 +46,26 @@ RSpec.describe SyntageSdk::Resources::Rug do
     end
   end
 
+  describe '#guarantee' do
+    it 'gets the rug/garantias/{id} path' do
+      rug.guarantee 'abc-123'
+
+      expect(client).to have_received(:get)
+        .with('datasources/rug/garantias/abc-123', anything)
+    end
+
+    it 'requests the JSON-LD representation' do
+      rug.guarantee 'abc-123'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('Accept' => 'application/ld+json')))
+    end
+
+    it 'returns the client response' do
+      expect(rug.guarantee('abc-123')).to be(response)
+    end
+  end
+
   describe '#operations' do
     it 'gets the entity-scoped rug/operaciones path' do
       rug.operations
