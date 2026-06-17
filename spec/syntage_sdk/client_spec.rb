@@ -78,10 +78,22 @@ RSpec.describe SyntageSdk::Client do
         .with(anything, hash_including(headers: hash_including('X-API-Key' => 'sk_test_123')))
     end
 
-    it 'forces the JSON parser so non application/json bodies are parsed' do
+    it 'parses JSON requests with the JSON parser' do
       client.get 'events'
 
       expect(HTTParty).to have_received(:get).with(anything, hash_including(format: :json))
+    end
+
+    it 'parses JSON-LD requests with the JSON parser' do
+      client.get 'events', headers: { 'Accept' => 'application/ld+json' }
+
+      expect(HTTParty).to have_received(:get).with(anything, hash_including(format: :json))
+    end
+
+    it 'returns raw bodies for non-JSON representations' do
+      client.get 'invoices/abc/cfdi', headers: { 'Accept' => 'application/pdf' }
+
+      expect(HTTParty).to have_received(:get).with(anything, hash_including(format: :plain))
     end
   end
 

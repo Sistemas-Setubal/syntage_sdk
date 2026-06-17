@@ -7,6 +7,11 @@ module SyntageSdk
   class Client
     RETRY_BACKOFF = 0.5
 
+    RESPONSE_PARSERS = {
+      'application/json' => :json,
+      'application/ld+json' => :json
+    }.freeze
+
     ERROR_CLASSES = {
       400 => ValidationError,
       401 => AuthenticationError,
@@ -86,7 +91,9 @@ module SyntageSdk
     end
 
     def request_options(query: nil, body: nil, headers: nil)
-      result = { headers: merged_headers(headers), timeout: @configuration.timeout, format: :json }
+      merged = merged_headers headers
+      format = RESPONSE_PARSERS.fetch merged['Accept'], :plain
+      result = { headers: merged, timeout: @configuration.timeout, format: format }
       result[:query] = query if query
       result[:body] = JSON.generate(body) if body
       result
