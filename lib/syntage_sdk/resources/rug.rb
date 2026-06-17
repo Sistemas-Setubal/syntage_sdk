@@ -19,6 +19,10 @@ module SyntageSdk
       def operations(**options)
         list_collection "entities/#{entity_id}/datasources/rug/operaciones", LIST, options
       end
+
+      def operation(id)
+        retrieve_resource "datasources/rug/operaciones/#{id}"
+      end
     end
   end
 end

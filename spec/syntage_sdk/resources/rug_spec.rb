@@ -98,4 +98,24 @@ RSpec.describe SyntageSdk::Resources::Rug do
       expect(rug.operations).to be(response)
     end
   end
+
+  describe '#operation' do
+    it 'gets the rug/operaciones/{id} path' do
+      rug.operation 'abc-123'
+
+      expect(client).to have_received(:get)
+        .with('datasources/rug/operaciones/abc-123', anything)
+    end
+
+    it 'requests the JSON-LD representation' do
+      rug.operation 'abc-123'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('Accept' => 'application/ld+json')))
+    end
+
+    it 'returns the client response' do
+      expect(rug.operation('abc-123')).to be(response)
+    end
+  end
 end
