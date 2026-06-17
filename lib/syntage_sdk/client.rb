@@ -89,8 +89,6 @@ module SyntageSdk
 
     def request_options(query: nil, body: nil, headers: nil)
       merged = merged_headers headers
-      # Parse as JSON only when we asked for a JSON representation; otherwise
-      # return the raw body (XML, PDF, ...) untouched.
       json = JSON_MEDIA_TYPES.include? merged['Accept']
       result = { headers: merged, timeout: @configuration.timeout, format: json ? :json : :plain }
       result[:query] = query if query
