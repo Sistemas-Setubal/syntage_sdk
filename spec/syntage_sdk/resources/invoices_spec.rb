@@ -384,8 +384,13 @@ RSpec.describe SyntageSdk::Resources::Invoices do
         .with(anything, hash_including(headers: { 'Accept' => 'application/pdf' }))
     end
 
-    it 'raises on an unsupported format without hitting the client' do
+    it 'raises on an unsupported format' do
       expect { invoices.cfdi id, format: :csv }.to raise_error(ArgumentError, /csv/)
+    end
+
+    it 'does not reach the client on an unsupported format' do
+      invoices.cfdi id, format: :csv
+    rescue ArgumentError
       expect(client).not_to have_received(:get)
     end
 

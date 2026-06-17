@@ -7,7 +7,10 @@ module SyntageSdk
   class Client
     RETRY_BACKOFF = 0.5
 
-    JSON_MEDIA_TYPES = ['application/json', 'application/ld+json'].freeze
+    RESPONSE_PARSERS = {
+      'application/json' => :json,
+      'application/ld+json' => :json
+    }.freeze
 
     ERROR_CLASSES = {
       400 => ValidationError,
@@ -89,8 +92,8 @@ module SyntageSdk
 
     def request_options(query: nil, body: nil, headers: nil)
       merged = merged_headers headers
-      json = JSON_MEDIA_TYPES.include? merged['Accept']
-      result = { headers: merged, timeout: @configuration.timeout, format: json ? :json : :plain }
+      format = RESPONSE_PARSERS.fetch merged['Accept'], :plain
+      result = { headers: merged, timeout: @configuration.timeout, format: format }
       result[:query] = query if query
       result[:body] = JSON.generate(body) if body
       result
