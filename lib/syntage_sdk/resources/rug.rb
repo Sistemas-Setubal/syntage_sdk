@@ -10,6 +10,10 @@ module SyntageSdk
       def guarantees(**options)
         list_collection "entities/#{entity_id}/datasources/rug/garantias", LIST, options
       end
+
+      def operations(**options)
+        list_collection "entities/#{entity_id}/datasources/rug/operaciones", LIST, options
+      end
     end
   end
 end

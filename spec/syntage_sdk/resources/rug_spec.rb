@@ -45,4 +45,37 @@ RSpec.describe SyntageSdk::Resources::Rug do
       expect(rug.guarantees).to be(response)
     end
   end
+
+  describe '#operations' do
+    it 'gets the entity-scoped rug/operaciones path' do
+      rug.operations
+
+      expect(client).to have_received(:get)
+        .with('entities/ent_123/datasources/rug/operaciones', anything)
+    end
+
+    it 'requests the JSON-LD representation' do
+      rug.operations
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('Accept' => 'application/ld+json')))
+    end
+
+    it 'sends an empty query when no filters are given' do
+      rug.operations
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'maps items_per_page to the camelCase param' do
+      rug.operations items_per_page: 50
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('itemsPerPage' => 50)))
+    end
+
+    it 'returns the client response' do
+      expect(rug.operations).to be(response)
+    end
+  end
 end
