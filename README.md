@@ -377,6 +377,29 @@ response = SyntageSdk.payments.retrieve('91106968-1abd-4d64-85c1-4e73d96fb997')
 response.body # the payment as a JSON-LD resource
 ```
 
+### Batch payments
+
+List batch payments as a JSON-LD (Hydra) collection. Without arguments it returns
+the batch payments across every invoice (`GET /invoices/batch-payments`); pass
+`invoice_id:` to scope it to a single invoice (`GET /invoices/:id/batch-payments`).
+Same cursor pagination as payments (`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.batch_payments.list(items_per_page: 50)   # all batch payments
+SyntageSdk.batch_payments.list(invoice_id: '91106968-…')        # one invoice's batch payments
+
+body = response.body
+body['hydra:member'] # array of batch payments
+body['hydra:view']   # cursor navigation links
+```
+
+Fetch a single batch payment by its UUID (`GET /invoices/batch-payments/:id`):
+
+```ruby
+response = SyntageSdk.batch_payments.retrieve('91106968-1abd-4d64-85c1-4e73d96fb997')
+response.body # the batch payment as a JSON-LD resource
+```
+
 ### Errors and retries
 
 Non-success responses raise:
