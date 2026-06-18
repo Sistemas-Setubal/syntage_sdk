@@ -32,6 +32,10 @@ module SyntageSdk
       Resources::Invoices.new
     end
 
+    def tax_returns
+      Resources::TaxReturns.new
+    end
+
     def payments
       Resources::Payments.new
     end
