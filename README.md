@@ -348,6 +348,35 @@ insights.trial_balance                                     # GET .../insights/tr
 insights.trial_balance(periodicity: 'monthly')             # options[periodicity]
 ```
 
+### Payments
+
+List payments as a JSON-LD (Hydra) collection. Without arguments it returns the
+payments across every invoice (`GET /invoices/payments`); pass `invoice_id:` to
+scope it to a single invoice (`GET /invoices/:id/payments`).
+
+```ruby
+response = SyntageSdk.payments.list(items_per_page: 50)        # all payments
+SyntageSdk.payments.list(invoice_id: '91106968-…')             # one invoice's payments
+
+body = response.body
+body['hydra:member'] # array of payments
+body['hydra:view']   # cursor navigation links
+```
+
+Cursor pagination uses `id_lt` / `id_gt` (mapped to `id[lt]` / `id[gt]`); pass the
+ids from the `hydra:view` links to move between pages:
+
+```ruby
+SyntageSdk.payments.list(id_lt: 'a1fd895b-5dcb-4cb4-89bc-3467f460c75b', items_per_page: 50)
+```
+
+Fetch a single payment by its UUID (`GET /invoices/payments/:id`):
+
+```ruby
+response = SyntageSdk.payments.retrieve('91106968-1abd-4d64-85c1-4e73d96fb997')
+response.body # the payment as a JSON-LD resource
+```
+
 ### Errors and retries
 
 Non-success responses raise:
