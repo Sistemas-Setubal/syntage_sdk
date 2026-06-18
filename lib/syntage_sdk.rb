@@ -32,13 +32,12 @@ module SyntageSdk
       Resources::Invoices.new
     end
 
-<<<<<<< HEAD
     def tax_returns
       Resources::TaxReturns.new
-=======
+    end
+
     def payments
       Resources::Payments.new
->>>>>>> 7808620452d521b4ded414aa8cc2ebb26fd963ea
     end
 
     def insights(entity_id)
