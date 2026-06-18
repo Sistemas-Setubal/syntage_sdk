@@ -32,6 +32,10 @@ module SyntageSdk
       Resources::Invoices.new
     end
 
+    def payments
+      Resources::Payments.new
+    end
+
     def insights(entity_id)
       Resources::Insights.new entity_id
     end
