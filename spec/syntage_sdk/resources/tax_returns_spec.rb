@@ -171,4 +171,31 @@ RSpec.describe SyntageSdk::Resources::TaxReturns do
       expect(tax_returns.retrieve(id)).to be(response)
     end
   end
+
+  describe '#data' do
+    let(:id) { 'a1fbecf9-0330-4821-886c-7d45da9c29f4' }
+
+    it 'gets the tax-return data path' do
+      tax_returns.data id
+
+      expect(client).to have_received(:get).with("tax-returns/#{id}/data", anything)
+    end
+
+    it 'requests the JSON representation' do
+      tax_returns.data id
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: { 'Accept' => 'application/json' }))
+    end
+
+    it 'does not send query params' do
+      tax_returns.data id
+
+      expect(client).to have_received(:get).with(anything, hash_excluding(:query))
+    end
+
+    it 'returns the client response' do
+      expect(tax_returns.data(id)).to be(response)
+    end
+  end
 end
