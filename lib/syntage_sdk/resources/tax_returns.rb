@@ -38,6 +38,10 @@ module SyntageSdk
       def retrieve(id)
         retrieve_resource "tax-returns/#{id}"
       end
+
+      def data(id)
+        client.get "tax-returns/#{id}/data", headers: { 'Accept' => 'application/json' }
+      end
     end
   end
 end
