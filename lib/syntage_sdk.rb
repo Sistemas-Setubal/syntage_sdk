@@ -40,6 +40,10 @@ module SyntageSdk
       Resources::Payments.new
     end
 
+    def batch_payments
+      Resources::BatchPayments.new
+    end
+
     def insights(entity_id)
       Resources::Insights.new entity_id
     end
