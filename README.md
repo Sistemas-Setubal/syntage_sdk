@@ -400,6 +400,51 @@ response = SyntageSdk.batch_payments.retrieve('91106968-1abd-4d64-85c1-4e73d96fb
 response.body # the batch payment as a JSON-LD resource
 ```
 
+### Line items
+
+List the line items of an invoice (`GET /invoices/:id/line-items`) as a JSON-LD
+(Hydra) collection. `invoice_id:` is required; pagination matches the other
+collections (`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.line_items.list(invoice_id: '91106968-…', items_per_page: 50)
+
+body = response.body
+body['hydra:member'] # array of line items
+body['hydra:view']   # cursor navigation links
+```
+
+### Credit notes
+
+List credit notes across invoices (`GET /invoices/credit-notes`) as a JSON-LD
+(Hydra) collection. Same cursor pagination as the other collections (`id_lt` /
+`id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.credit_notes.list(items_per_page: 50)
+
+body = response.body
+body['hydra:member'] # array of credit notes
+body['hydra:view']   # cursor navigation links
+```
+
+List the credit notes related to a given invoice — the ones it **issued**
+(`GET /invoices/:id/issued-credit-notes`) or the ones **applied** to it
+(`GET /invoices/:id/applied-credit-notes`):
+
+```ruby
+SyntageSdk.credit_notes.issued(invoice_id: '91106968-…')
+SyntageSdk.credit_notes.applied(invoice_id: '91106968-…')
+```
+
+Fetch a single credit note by its UUID (`GET /invoices/credit-note/:id` — note the
+singular `credit-note`):
+
+```ruby
+response = SyntageSdk.credit_notes.retrieve('91106968-1abd-4d64-85c1-4e73d96fb997')
+response.body # the credit note as a JSON-LD resource
+```
+
 ### Errors and retries
 
 Non-success responses raise:
