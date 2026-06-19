@@ -445,6 +445,20 @@ response = SyntageSdk.credit_notes.retrieve('91106968-1abd-4d64-85c1-4e73d96fb99
 response.body # the credit note as a JSON-LD resource
 ```
 
+### Tax status
+
+List a taxpayer's tax status history (`GET /entities/:entity_id/tax-status`) as a
+JSON-LD (Hydra) collection. `entity_id:` is required; pagination matches the other
+collections (`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.tax_status.list(entity_id: '91106968-…', items_per_page: 50)
+
+body = response.body
+body['hydra:member'] # array of tax status records
+body['hydra:view']   # cursor navigation links
+```
+
 ### Errors and retries
 
 Non-success responses raise:

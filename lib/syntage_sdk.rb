@@ -52,6 +52,10 @@ module SyntageSdk
       Resources::CreditNotes.new
     end
 
+    def tax_status
+      Resources::TaxStatus.new
+    end
+
     def insights(entity_id)
       Resources::Insights.new entity_id
     end
