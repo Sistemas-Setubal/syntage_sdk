@@ -44,6 +44,14 @@ module SyntageSdk
       Resources::BatchPayments.new
     end
 
+    def line_items
+      Resources::LineItems.new
+    end
+
+    def credit_notes
+      Resources::CreditNotes.new
+    end
+
     def insights(entity_id)
       Resources::Insights.new entity_id
     end
