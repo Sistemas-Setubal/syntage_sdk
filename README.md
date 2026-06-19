@@ -459,6 +459,28 @@ body['hydra:member'] # array of tax status records
 body['hydra:view']   # cursor navigation links
 ```
 
+### Tax compliance checks
+
+List a taxpayer's compliance opinions (`GET /entities/:entity_id/tax-compliance-checks`)
+as a JSON-LD (Hydra) collection. `entity_id:` is required. Filters: `internal_identifier`,
+`taxpayer_rfc`, `taxpayer_name`, `result` (`positive` / `negative` / `no_obligations` /
+`activity_suspended`); date ranges on `checked_at` and `created_at`
+(`{ before:, after:, strictly_before:, strictly_after: }`); ordering via
+`order: { checked_at:, created_at: }`; and the usual cursor pagination
+(`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.tax_compliance_checks.list(
+  entity_id: '91106968-…',
+  result:    'positive',
+  order:     { checked_at: 'desc' }
+)
+
+body = response.body
+body['hydra:member'] # array of compliance checks
+body['hydra:view']   # cursor navigation links
+```
+
 ### Errors and retries
 
 Non-success responses raise:
