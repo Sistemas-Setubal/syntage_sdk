@@ -1,16 +1,10 @@
 # frozen_string_literal: true
 
 require 'httparty'
-require 'json'
 
 module SyntageSdk
   class Client
     RETRY_BACKOFF = 0.5
-
-    RESPONSE_PARSERS = {
-      'application/json' => :json,
-      'application/ld+json' => :json
-    }.freeze
 
     ERROR_CLASSES = {
       400 => ValidationError,
@@ -30,14 +24,19 @@ module SyntageSdk
 
     def initialize(configuration = SyntageSdk.configuration)
       @configuration = configuration
+      @builder = RequestBuilder.new configuration
     end
 
     def get(path, query: nil, headers: nil)
-      request { HTTParty.get url_for(path), request_options(query: query, headers: headers) }
+      request { HTTParty.get @builder.url_for(path), @builder.options(query: query, headers: headers) }
     end
 
     def post(path, body: nil)
-      request { HTTParty.post url_for(path), request_options(body: body) }
+      request { HTTParty.post @builder.url_for(path), @builder.options(body: body) }
+    end
+
+    def delete(path)
+      request { HTTParty.delete @builder.url_for(path), @builder.options }
     end
 
     private
@@ -88,28 +87,6 @@ module SyntageSdk
 
     def build_response(response, status, metadata)
       Response.new status: status, body: response.parsed_response, metadata: metadata
-    end
-
-    def request_options(query: nil, body: nil, headers: nil)
-      merged = merged_headers headers
-      format = RESPONSE_PARSERS.fetch merged['Accept'], :plain
-      result = { headers: merged, timeout: @configuration.timeout, format: format }
-      result[:query] = query if query
-      result[:body] = JSON.generate(body) if body
-      result
-    end
-
-    def merged_headers(headers)
-      base = @configuration.headers
-      return base unless headers
-
-      base.merge headers
-    end
-
-    def url_for(path)
-      base = @configuration.base_url.chomp '/'
-      suffix = path.to_s.sub %r{\A/}, ''
-      "#{base}/#{suffix}"
     end
 
     def normalize(headers)
