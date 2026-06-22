@@ -481,6 +481,62 @@ body['hydra:member'] # array of compliance checks
 body['hydra:view']   # cursor navigation links
 ```
 
+### Tax retentions
+
+List a taxpayer's tax retentions (`GET /entities/:entity_id/tax-retentions`) as a
+JSON-LD (Hydra) collection. `entity_id:` is required. Filters: `uuid`, `version`,
+`internal_identifier`, `pac`, `code`, `issuer_rfc`, `issuer_name`, `issuer_curp`,
+`receiver_rfc`, `receiver_name`, `receiver_curp`, `receiver_nationality`, `has_xml`,
+`has_pdf`; numeric ranges on `total_operation_amount`, `total_taxable_amount`,
+`total_exempt_amount` and `total_retained_amount`
+(`{ gt:, gte:, lt:, lte:, between: }`, e.g. `between: '12.99..15.99'`); date ranges on
+`issued_at`, `canceled_at`, `certified_at`, `period_from`, `period_to` and `created_at`
+(`{ before:, after:, strictly_before:, strictly_after: }`); ordering via
+`order: { issued_at:, canceled_at:, certified_at:, period_from:, period_to:,
+total_operation_amount:, total_taxable_amount:, total_exempt_amount:,
+total_retained_amount:, created_at: }`; and the usual cursor pagination
+(`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.tax_retentions.list(
+  entity_id:             '91106968-…',
+  total_retained_amount: { gte: '100.00' },
+  order:                 { issued_at: 'desc' }
+)
+
+body = response.body
+body['hydra:member'] # array of tax retentions
+body['hydra:view']   # cursor navigation links
+```
+
+Retrieve a single retention by id (`GET /tax-retentions/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.tax_retentions.retrieve('91106968-…')
+response.body # the tax retention record
+```
+
+Fetch the retention's CFDI (`GET /tax-retentions/:id/cfdi`) in one of three formats,
+selected with `format:` (default `:json`), exactly like `invoices.cfdi`:
+
+| `format:` | `Accept` | `response.body` |
+| --- | --- | --- |
+| `:json` (default) | `application/json` | the CFDI parsed into a Hash |
+| `:xml` | `text/xml` | the original XML as a raw String |
+| `:pdf` | `application/pdf` | the PDF as raw bytes (String) |
+
+```ruby
+id = '91106968-1abd-4d64-85c1-4e73d96fb997'
+
+SyntageSdk.tax_retentions.cfdi(id)               # => body is a Hash
+SyntageSdk.tax_retentions.cfdi(id, format: :xml) # => body is the raw XML
+
+pdf = SyntageSdk.tax_retentions.cfdi(id, format: :pdf)
+File.binwrite('retention.pdf', pdf.body)
+```
+
+Any other `format:` raises `ArgumentError`.
+
 ### Errors and retries
 
 Non-success responses raise:

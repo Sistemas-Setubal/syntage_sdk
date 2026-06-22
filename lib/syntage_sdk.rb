@@ -60,6 +60,10 @@ module SyntageSdk
       Resources::TaxComplianceChecks.new
     end
 
+    def tax_retentions
+      Resources::TaxRetentions.new
+    end
+
     def insights(entity_id)
       Resources::Insights.new entity_id
     end
