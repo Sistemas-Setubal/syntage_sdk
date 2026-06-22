@@ -80,6 +80,10 @@ module SyntageSdk
       Resources::Shareholders.new
     end
 
+    def syntage_score(entity_id)
+      Resources::SyntageScore.new entity_id
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil
