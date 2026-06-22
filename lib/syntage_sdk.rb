@@ -84,6 +84,10 @@ module SyntageSdk
       Resources::SyntageScore.new entity_id
     end
 
+    def rpc_entities(entity_id)
+      Resources::RpcEntities.new entity_id
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil
