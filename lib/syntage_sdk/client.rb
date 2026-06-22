@@ -6,6 +6,8 @@ module SyntageSdk
   class Client
     RETRY_BACKOFF = 0.5
 
+    PATCH_HEADERS = { 'Content-Type' => 'application/merge-patch+json' }.freeze
+
     ERROR_CLASSES = {
       400 => ValidationError,
       401 => AuthenticationError,
@@ -33,6 +35,10 @@ module SyntageSdk
 
     def post(path, body: nil)
       request { HTTParty.post @builder.url_for(path), @builder.options(body: body) }
+    end
+
+    def patch(path, body: nil)
+      request { HTTParty.patch @builder.url_for(path), @builder.options(body: body, headers: PATCH_HEADERS) }
     end
 
     def delete(path)
