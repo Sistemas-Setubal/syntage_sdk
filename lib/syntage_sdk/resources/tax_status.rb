@@ -4,6 +4,7 @@ module SyntageSdk
   module Resources
     class TaxStatus < BaseResource
       include Listable
+      include Retrievable
 
       FILTERS = {
         id_lt: 'id[lt]',
@@ -14,6 +15,10 @@ module SyntageSdk
 
       def list(entity_id:, **options)
         list_collection "entities/#{entity_id}/tax-status", LIST, options
+      end
+
+      def retrieve(id)
+        retrieve_resource "tax-status/#{id}"
       end
     end
   end
