@@ -142,7 +142,8 @@ RSpec.describe SyntageSdk::Resources::Shareholders do
     end
 
     it 'includes rfc when given' do
-      shareholders.create entity_id: 'ent_123', relation_type: 'shareholders', name: 'JUAN PEREZ', shares: 1500.50, rfc: 'PEGJ850101HM2'
+      shareholders.create entity_id: 'ent_123', relation_type: 'shareholders', name: 'JUAN PEREZ', shares: 1500.50,
+rfc: 'PEGJ850101HM2'
 
       expect(client).to have_received(:post)
         .with(anything, body: hash_including(rfc: 'PEGJ850101HM2'))
