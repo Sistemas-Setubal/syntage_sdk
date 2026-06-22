@@ -72,6 +72,10 @@ module SyntageSdk
       Resources::Rug.new entity_id
     end
 
+    def shareholders
+      Resources::Shareholders.new
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil

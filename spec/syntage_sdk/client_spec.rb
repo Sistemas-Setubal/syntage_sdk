@@ -110,6 +110,37 @@ RSpec.describe SyntageSdk::Client do
     end
   end
 
+  describe 'when patching a resource' do
+    let(:response) { http_response 200, body: { 'id' => 'sh_1' } }
+
+    before { allow(HTTParty).to receive(:patch).and_return(response) }
+
+    it 'calls HTTParty.patch with the correct URL' do
+      client.patch 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' }
+
+      expect(HTTParty).to have_received(:patch)
+        .with('https://api.example.com/shareholders/sh_1', anything)
+    end
+
+    it 'serializes the body as JSON' do
+      client.patch 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' }
+
+      expect(HTTParty).to have_received(:patch)
+        .with(anything, hash_including(body: '{"name":"NUEVO NOMBRE"}'))
+    end
+
+    it 'sends application/merge-patch+json as Content-Type' do
+      client.patch 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' }
+
+      expect(HTTParty).to have_received(:patch)
+        .with(anything, hash_including(headers: hash_including('Content-Type' => 'application/merge-patch+json')))
+    end
+
+    it 'returns a wrapped response' do
+      expect(client.patch('shareholders/sh_1', body: {})).to be_a(SyntageSdk::Response)
+    end
+  end
+
   describe 'when deleting a resource' do
     let(:response) { http_response 204 }
 
