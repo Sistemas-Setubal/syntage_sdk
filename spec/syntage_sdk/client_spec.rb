@@ -110,6 +110,23 @@ RSpec.describe SyntageSdk::Client do
     end
   end
 
+  describe 'when deleting a resource' do
+    let(:response) { http_response 204 }
+
+    before { allow(HTTParty).to receive(:delete).and_return(response) }
+
+    it 'calls HTTParty.delete with the correct URL' do
+      client.delete 'authorizations/abc-123'
+
+      expect(HTTParty).to have_received(:delete)
+        .with('https://api.example.com/authorizations/abc-123', anything)
+    end
+
+    it 'returns a wrapped response' do
+      expect(client.delete('authorizations/abc-123')).to be_a(SyntageSdk::Response)
+    end
+  end
+
   describe 'when the API responds with 401' do
     before do
       allow(HTTParty).to receive(:get)

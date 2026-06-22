@@ -40,6 +40,10 @@ module SyntageSdk
       request { HTTParty.post url_for(path), request_options(body: body) }
     end
 
+    def delete(path)
+      request { HTTParty.delete url_for(path), request_options }
+    end
+
     private
 
     def request
