@@ -50,8 +50,7 @@ module SyntageSdk
         total_operation_amount: 'totalOperationAmount',
         total_taxable_amount:   'totalTaxableAmount',
         total_exempt_amount:    'totalExemptAmount',
-        total_retained_amount:  'totalRetainedAmount',
-        created_at:             'createdAt'
+        total_retained_amount:  'totalRetainedAmount'
       }.freeze
 
       LIST = ListConfig.new(

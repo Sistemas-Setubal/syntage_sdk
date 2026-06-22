@@ -71,4 +71,31 @@ RSpec.describe SyntageSdk::Resources::TaxStatus do
       expect(tax_status.list(entity_id: entity_id)).to be(response)
     end
   end
+
+  describe '#retrieve' do
+    let(:id) { '91106968-1abd-4d64-85c1-4e73d96fb997' }
+
+    it 'gets the singular tax-status path' do
+      tax_status.retrieve id
+
+      expect(client).to have_received(:get).with("tax-status/#{id}", anything)
+    end
+
+    it 'requests the JSON-LD representation' do
+      tax_status.retrieve id
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('Accept' => 'application/ld+json')))
+    end
+
+    it 'does not send query params' do
+      tax_status.retrieve id
+
+      expect(client).to have_received(:get).with(anything, hash_excluding(:query))
+    end
+
+    it 'returns the client response' do
+      expect(tax_status.retrieve(id)).to be(response)
+    end
+  end
 end

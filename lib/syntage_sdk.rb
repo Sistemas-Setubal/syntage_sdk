@@ -64,6 +64,10 @@ module SyntageSdk
       Resources::TaxRetentions.new
     end
 
+    def electronic_accounting
+      Resources::ElectronicAccounting.new
+    end
+
     def insights(entity_id)
       Resources::Insights.new entity_id
     end

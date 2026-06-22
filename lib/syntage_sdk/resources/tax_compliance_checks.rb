@@ -4,6 +4,7 @@ module SyntageSdk
   module Resources
     class TaxComplianceChecks < BaseResource
       include Listable
+      include Retrievable
 
       FILTERS = {
         internal_identifier: 'internalIdentifier',
@@ -31,6 +32,10 @@ module SyntageSdk
 
       def list(entity_id:, **options)
         list_collection "entities/#{entity_id}/tax-compliance-checks", LIST, options
+      end
+
+      def retrieve(id)
+        retrieve_resource "tax-compliance-checks/#{id}"
       end
     end
   end

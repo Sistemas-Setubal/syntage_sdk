@@ -459,6 +459,13 @@ body['hydra:member'] # array of tax status records
 body['hydra:view']   # cursor navigation links
 ```
 
+Retrieve a single tax status by id (`GET /tax-status/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.tax_status.retrieve('91106968-…')
+response.body # the tax status record
+```
+
 ### Tax compliance checks
 
 List a taxpayer's compliance opinions (`GET /entities/:entity_id/tax-compliance-checks`)
@@ -481,6 +488,14 @@ body['hydra:member'] # array of compliance checks
 body['hydra:view']   # cursor navigation links
 ```
 
+Retrieve a single compliance check by id (`GET /tax-compliance-checks/:id`) as a
+JSON-LD object:
+
+```ruby
+response = SyntageSdk.tax_compliance_checks.retrieve('91106968-…')
+response.body # the compliance check record
+```
+
 ### Tax retentions
 
 List a taxpayer's tax retentions (`GET /entities/:entity_id/tax-retentions`) as a
@@ -494,7 +509,7 @@ JSON-LD (Hydra) collection. `entity_id:` is required. Filters: `uuid`, `version`
 (`{ before:, after:, strictly_before:, strictly_after: }`); ordering via
 `order: { issued_at:, canceled_at:, certified_at:, period_from:, period_to:,
 total_operation_amount:, total_taxable_amount:, total_exempt_amount:,
-total_retained_amount:, created_at: }`; and the usual cursor pagination
+total_retained_amount: }`; and the usual cursor pagination
 (`id_lt` / `id_gt`, `items_per_page`).
 
 ```ruby
@@ -536,6 +551,37 @@ File.binwrite('retention.pdf', pdf.body)
 ```
 
 Any other `format:` raises `ArgumentError`.
+
+### Electronic accounting
+
+List a entity's electronic accounting records
+(`GET /entities/:entity_id/electronic-accounting-records`) as a JSON-LD (Hydra)
+collection. `entity_id:` is required. Filters: `year`, `month`, `type` (`N` / `C`),
+`reason` (`AF` / `DE` / `CO` / `FC` / `EM`), `file_type` (`CT` / `B` / `PL` / `XF` /
+`XC`), `filename`, `code`, `status` (`received` / `accepted` / `rejected`); date ranges
+on `received_at` (`{ before:, after:, strictly_before:, strictly_after: }`); ordering via
+`order: { year:, month:, received_at: }`; and the usual cursor pagination
+(`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.electronic_accounting.list(
+  entity_id: '91106968-…',
+  year:      2026,
+  order:     { received_at: 'desc' }
+)
+
+body = response.body
+body['hydra:member'] # array of electronic accounting records
+body['hydra:view']   # cursor navigation links
+```
+
+Retrieve a single record by id (`GET /electronic-accounting-records/:id`) as a
+JSON-LD object:
+
+```ruby
+response = SyntageSdk.electronic_accounting.retrieve('91106968-…')
+response.body # the electronic accounting record
+```
 
 ### Errors and retries
 
