@@ -80,6 +80,10 @@ module SyntageSdk
       Resources::Shareholders.new
     end
 
+    def background_checks
+      Resources::BackgroundChecks.new
+    end
+
     def syntage_score(entity_id)
       Resources::SyntageScore.new entity_id
     end
