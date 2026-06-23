@@ -583,6 +583,64 @@ response = SyntageSdk.electronic_accounting.retrieve('91106968-…')
 response.body # the electronic accounting record
 ```
 
+### Background checks
+
+List an entity's background checks (`GET /entities/:entity_id/background-checks`) as a
+JSON-LD (Hydra) collection. `entity_id:` is required. Filters: `status` (`pending` /
+`completed` / `error`), `country` (`MX` / `ALL`); ordering via
+`order: { score:, created_at:, updated_at: }`; and the usual cursor pagination
+(`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.background_checks.list(
+  entity_id: '91106968-…',
+  status:    'completed',
+  order:     { score: 'desc' }
+)
+
+body = response.body
+body['hydra:member'] # array of background checks
+body['hydra:view']   # cursor navigation links
+```
+
+List every background check across entities (`GET /background-checks`) with the same
+filters, ordering and pagination:
+
+```ruby
+response = SyntageSdk.background_checks.list_all(country: 'MX')
+response.body['hydra:member'] # array of background checks
+```
+
+Retrieve a single background check by id (`GET /background-checks/:id`) as a JSON-LD
+object:
+
+```ruby
+response = SyntageSdk.background_checks.retrieve('91106968-…')
+response.body # the background check record
+```
+
+Get the background check's PDF report (`GET /background-checks/:id/pdf`). Despite its
+name, this endpoint does **not** return the PDF bytes — it returns a JSON object with a
+short-lived, presigned URL you download the file from:
+
+```ruby
+response = SyntageSdk.background_checks.pdf('91106968-…')
+response.body['url'] # => "https://…s3…/…background_check_report.pdf?X-Amz-…"
+```
+
+List a background check's records (`GET /background-checks/:id/records`) as a JSON-LD
+collection. Filter by `category` (e.g. `criminal_record`, `legal_background`,
+`politically_exposed_person`, …); ordering via `order: { created_at:, updated_at: }`;
+and the usual cursor pagination (`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.background_checks.records(
+  '91106968-…',
+  category: 'criminal_record'
+)
+response.body['hydra:member'] # array of records
+```
+
 ### Errors and retries
 
 Non-success responses raise:
