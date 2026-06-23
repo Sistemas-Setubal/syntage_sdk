@@ -92,6 +92,10 @@ module SyntageSdk
       Resources::RpcEntities.new entity_id
     end
 
+    def sat_certificates(entity_id)
+      Resources::SatCertificates.new entity_id
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil
