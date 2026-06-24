@@ -641,6 +641,42 @@ response = SyntageSdk.background_checks.records(
 response.body['hydra:member'] # array of records
 ```
 
+### Company verification reports
+
+List an entity's company verification reports
+(`GET /entities/:entity_id/datasources/mx/company-verification/reports`) as a JSON-LD
+(Hydra) collection. `entity_id:` is required. Ordering via
+`order: { created_at:, updated_at: }`; and the usual cursor pagination
+(`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.company_verification_reports.list(
+  entity_id: '91106968-…',
+  order:     { created_at: 'desc' }
+)
+
+body = response.body
+body['hydra:member'] # array of company verification reports
+body['hydra:view']   # cursor navigation links
+```
+
+List every company verification report across entities
+(`GET /datasources/mx/company-verification/reports`) with the same ordering and
+pagination:
+
+```ruby
+response = SyntageSdk.company_verification_reports.list_all(items_per_page: 50)
+response.body['hydra:member'] # array of company verification reports
+```
+
+Retrieve a single company verification report by id
+(`GET /datasources/mx/company-verification/reports/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.company_verification_reports.retrieve('91106968-…')
+response.body # the company verification report
+```
+
 ### Errors and retries
 
 Non-success responses raise:

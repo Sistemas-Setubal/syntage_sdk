@@ -84,6 +84,10 @@ module SyntageSdk
       Resources::BackgroundChecks.new
     end
 
+    def company_verification_reports
+      Resources::CompanyVerificationReports.new
+    end
+
     def syntage_score(entity_id)
       Resources::SyntageScore.new entity_id
     end
