@@ -707,6 +707,110 @@ rescue SyntageSdk::AuthenticationError => error
 end
 ```
 
+## Webhooks
+
+Syntage can push events to your server over HTTP. The SDK ships a Rack middleware
+(`SyntageSdk::Webhook::Middleware`) that verifies the HMAC-SHA256 signature on
+every incoming request and exposes a parsed `Event` object to your handler.
+
+### Mounting the middleware
+
+**Rails** — add it in `config/application.rb` (or an initializer):
+
+```ruby
+config.middleware.use SyntageSdk::Webhook::Middleware,
+                      secret: ENV.fetch('SYNTAGE_WEBHOOK_SECRET')
+```
+
+**Sinatra / bare Rack** — add it to your `config.ru`:
+
+```ruby
+use SyntageSdk::Webhook::Middleware, secret: ENV.fetch('SYNTAGE_WEBHOOK_SECRET')
+run Sinatra::Application
+```
+
+If you omit `secret:`, the middleware reads `ENV['SYNTAGE_WEBHOOK_SECRET']`
+automatically. Requests with an invalid or missing signature return `401`;
+requests with an unparseable JSON body return `400`.
+
+### Handling events
+
+The middleware stores the parsed event in `env['syntage.webhook_event']`
+before calling the next app. Read it from your controller or route handler:
+
+```ruby
+# Rails controller
+class WebhooksController < ApplicationController
+  skip_before_action :verify_authenticity_token
+
+  def receive
+    event = request.env['syntage.webhook_event']
+
+    case event.type
+    when 'credential.updated'
+      # handle credential update
+    when 'file.created'
+      # handle new file
+    end
+
+    head :ok
+  end
+end
+```
+
+```ruby
+# Sinatra route
+post '/webhooks' do
+  event = env['syntage.webhook_event']
+  # event.id, event.type, event.resource, event.data, event.created_at
+  status 200
+end
+```
+
+The `Event` struct exposes:
+
+| Field        | Description                                   |
+| ------------ | --------------------------------------------- |
+| `id`         | Unique event identifier                        |
+| `type`       | Event type string (e.g. `"credential.updated"`) |
+| `resource`   | IRI of the related resource                   |
+| `data`       | Event payload hash                            |
+| `created_at` | ISO-8601 timestamp                            |
+
+### Secret rotation
+
+The middleware rejects events signed with a different secret and ignores
+timestamps older than 5 minutes (`TIMESTAMP_TOLERANCE = 300`). To rotate
+the webhook secret without dropping in-flight events, use a short dual-secret
+window:
+
+1. Generate the new secret in the Syntage dashboard (the old one stays active).
+2. Deploy a thin wrapper that tries both secrets before rejecting the request:
+
+```ruby
+# config/application.rb (or config.ru)
+class DualSecretWebhookMiddleware
+  def initialize(app)
+    @primary   = SyntageSdk::Webhook::Middleware.new(app, secret: ENV.fetch('SYNTAGE_WEBHOOK_SECRET_NEW'))
+    @secondary = SyntageSdk::Webhook::Middleware.new(app, secret: ENV.fetch('SYNTAGE_WEBHOOK_SECRET_OLD'))
+  end
+
+  def call(env)
+    status, headers, body = @primary.call(env.dup)
+    return [status, headers, body] unless status == 401
+
+    @secondary.call(env)
+  end
+end
+
+config.middleware.use DualSecretWebhookMiddleware
+```
+
+3. Once Syntage stops signing with the old secret (or after the 5-minute
+   tolerance window has passed for all in-flight requests), remove
+   `SYNTAGE_WEBHOOK_SECRET_OLD` and replace the wrapper with the standard
+   middleware pointing to `SYNTAGE_WEBHOOK_SECRET_NEW`.
+
 ## Response metadata
 
 From a response's headers you can read its identifier and rate limit status.
