@@ -100,6 +100,10 @@ module SyntageSdk
       Resources::SatCertificates.new entity_id
     end
 
+    def schedulers
+      Resources::Schedulers.new
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil
