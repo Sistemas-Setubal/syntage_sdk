@@ -677,6 +677,42 @@ response = SyntageSdk.company_verification_reports.retrieve('91106968-…')
 response.body # the company verification report
 ```
 
+### Schedulers
+
+Create a scheduler that drives recurring extractions (`POST /schedulers`,
+returns `202`).
+
+```ruby
+response = SyntageSdk.schedulers.create(
+  name: 'Daily extractions', # optional
+  is_enabled: true,          # optional, defaults to true on the API
+  tags: ['/entity-tags/abc'] # optional, entity tag IRIs
+)
+
+response.status     # 202
+response.body['id'] # the created scheduler id
+```
+
+`type` defaults to `'recurring'` (the only value the API accepts when creating a
+scheduler) and can be overridden. `name`, `is_enabled` and `tags` are optional and
+only sent when provided; `is_enabled` is mapped to the API's `isEnabled` field, so
+passing `is_enabled: false` creates a disabled scheduler.
+
+Retrieve a single scheduler by id (`GET /schedulers/:id`) as a JSON-LD object
+that includes its rules and tags:
+
+```ruby
+response = SyntageSdk.schedulers.retrieve('91106968-…')
+response.body # the scheduler, with its rules and tags
+```
+
+Delete a scheduler by id (`DELETE /schedulers/:id`, returns `204`):
+
+```ruby
+response = SyntageSdk.schedulers.delete('91106968-…')
+response.status # 204
+```
+
 ### Errors and retries
 
 Non-success responses raise:
