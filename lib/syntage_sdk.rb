@@ -100,6 +100,14 @@ module SyntageSdk
       Resources::SatCertificates.new entity_id
     end
 
+    def entity_tags
+      Resources::EntityTags.new
+    end
+
+    def tags
+      Resources::Tags.new
+    end
+
     def schedulers
       Resources::Schedulers.new
     end
