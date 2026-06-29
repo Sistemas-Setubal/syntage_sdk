@@ -81,6 +81,35 @@ RSpec.describe SyntageSdk::Resources::SatCertificates do
     end
   end
 
+  describe '#check_expiry' do
+    before { allow(Date).to receive(:today).and_return(Date.new(2025, 1, 1)) }
+
+    it 'sends validTo[after] set to today' do
+      sat_certificates.check_expiry
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('validTo[after]' => '2025-01-01')))
+    end
+
+    it 'sends validTo[strictly_before] set to 30 days from today by default' do
+      sat_certificates.check_expiry
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('validTo[strictly_before]' => '2025-01-31')))
+    end
+
+    it 'accepts a custom threshold_days' do
+      sat_certificates.check_expiry threshold_days: 7
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('validTo[strictly_before]' => '2025-01-08')))
+    end
+
+    it 'returns the client response' do
+      expect(sat_certificates.check_expiry).to be(response)
+    end
+  end
+
   describe '#retrieve' do
     it 'gets the global sat/certificados path with id' do
       sat_certificates.retrieve 'cert_123'
