@@ -131,14 +131,17 @@ RSpec.describe SyntageSdk::Resources::Shareholders do
       shareholders.create entity_id: 'ent_123', relation_type: 'shareholders', name: 'JUAN PEREZ', shares: 1500.50
 
       expect(client).to have_received(:post)
-        .with('entities/ent_123/shareholders', anything)
+        .with(an_object_having_attributes(path: 'entities/ent_123/shareholders'))
     end
 
     it 'sends the required fields in camelCase' do
       shareholders.create entity_id: 'ent_123', relation_type: 'shareholders', name: 'JUAN PEREZ', shares: 1500.50
 
-      expect(client).to have_received(:post)
-        .with(anything, body: hash_including(relationType: 'shareholders', name: 'JUAN PEREZ', shares: 1500.50))
+      expect(client).to have_received(:post).with(
+        an_object_having_attributes(
+          body: hash_including(relationType: 'shareholders', name: 'JUAN PEREZ', shares: 1500.50)
+        )
+      )
     end
 
     it 'includes rfc when given' do
@@ -146,14 +149,14 @@ RSpec.describe SyntageSdk::Resources::Shareholders do
 rfc: 'PEGJ850101HM2'
 
       expect(client).to have_received(:post)
-        .with(anything, body: hash_including(rfc: 'PEGJ850101HM2'))
+        .with(an_object_having_attributes(body: hash_including(rfc: 'PEGJ850101HM2')))
     end
 
     it 'omits rfc when not given' do
       shareholders.create entity_id: 'ent_123', relation_type: 'shareholders', name: 'JUAN PEREZ', shares: 1500.50
 
       expect(client).to have_received(:post)
-        .with(anything, body: ->(body) { !body.key?(:rfc) })
+        .with(an_object_having_attributes(body: hash_excluding(:rfc)))
     end
 
     it 'raises ArgumentError when relation_type is missing' do
@@ -182,34 +185,34 @@ rfc: 'PEGJ850101HM2'
     it 'patches the global shareholders path' do
       shareholders.update 'sh_123', name: 'NUEVO NOMBRE'
 
-      expect(client).to have_received(:patch).with('shareholders/sh_123', anything)
+      expect(client).to have_received(:patch).with(an_object_having_attributes(path: 'shareholders/sh_123'))
     end
 
     it 'sends the name when given' do
       shareholders.update 'sh_123', name: 'NUEVO NOMBRE'
 
       expect(client).to have_received(:patch)
-        .with(anything, body: hash_including(name: 'NUEVO NOMBRE'))
+        .with(an_object_having_attributes(body: hash_including(name: 'NUEVO NOMBRE')))
     end
 
     it 'sends the rfc when given' do
       shareholders.update 'sh_123', rfc: 'PEGJ850101HM2'
 
       expect(client).to have_received(:patch)
-        .with(anything, body: hash_including(rfc: 'PEGJ850101HM2'))
+        .with(an_object_having_attributes(body: hash_including(rfc: 'PEGJ850101HM2')))
     end
 
     it 'omits fields not given' do
       shareholders.update 'sh_123', name: 'NUEVO NOMBRE'
 
       expect(client).to have_received(:patch)
-        .with(anything, body: ->(body) { !body.key?(:rfc) })
+        .with(an_object_having_attributes(body: hash_excluding(:rfc)))
     end
 
     it 'ignores unknown fields' do
       shareholders.update 'sh_123', unknown: 'value'
 
-      expect(client).to have_received(:patch).with(anything, body: {})
+      expect(client).to have_received(:patch).with(an_object_having_attributes(body: {}))
     end
 
     it 'returns the client response' do

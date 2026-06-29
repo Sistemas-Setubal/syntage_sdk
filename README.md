@@ -679,6 +679,18 @@ response.body # the company verification report
 
 ### Schedulers
 
+List schedulers (`GET /schedulers`) as a JSON-LD collection. The endpoint supports
+`items_per_page` and cursor pagination through `id_lt` / `id_gt` (mapped to the
+API's `id[lt]` / `id[gt]` params):
+
+```ruby
+response = SyntageSdk.schedulers.list(items_per_page: 20)
+response.body['hydra:member'] # the schedulers
+
+# next page, after the last id seen
+SyntageSdk.schedulers.list(items_per_page: 20, id_lt: '91106968-…')
+```
+
 Create a scheduler that drives recurring extractions (`POST /schedulers`,
 returns `202`).
 
@@ -705,6 +717,22 @@ that includes its rules and tags:
 response = SyntageSdk.schedulers.retrieve('91106968-…')
 response.body # the scheduler, with its rules and tags
 ```
+
+Update a scheduler by id (`PUT /schedulers/:id`, returns `200`):
+
+```ruby
+response = SyntageSdk.schedulers.update(
+  '91106968-…',
+  name: 'Weekly extractions', # optional
+  is_enabled: false,          # optional
+  tags: ['/entity-tags/abc']  # optional, entity tag IRIs
+)
+
+response.body # the updated scheduler
+```
+
+`name`, `is_enabled` and `tags` are optional and only sent when provided;
+`is_enabled` is mapped to the API's `isEnabled` field.
 
 Delete a scheduler by id (`DELETE /schedulers/:id`, returns `204`):
 

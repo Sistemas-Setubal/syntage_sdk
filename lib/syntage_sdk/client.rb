@@ -33,12 +33,16 @@ module SyntageSdk
       request { HTTParty.get @builder.url_for(path), @builder.options(query: query, headers: headers) }
     end
 
-    def post(path, body: nil)
-      request { HTTParty.post @builder.url_for(path), @builder.options(body: body) }
+    def post(req)
+      request { HTTParty.post @builder.url_for(req.path), @builder.options(body: req.body) }
     end
 
-    def patch(path, body: nil)
-      request { HTTParty.patch @builder.url_for(path), @builder.options(body: body, headers: PATCH_HEADERS) }
+    def patch(req)
+      request { HTTParty.patch @builder.url_for(req.path), @builder.options(body: req.body, headers: PATCH_HEADERS) }
+    end
+
+    def put(req)
+      request { HTTParty.put @builder.url_for(req.path), @builder.options(body: req.body) }
     end
 
     def delete(path)

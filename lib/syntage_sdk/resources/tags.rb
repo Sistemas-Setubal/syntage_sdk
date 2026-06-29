@@ -13,11 +13,11 @@ module SyntageSdk
 
       def create(name:, resource_type:, resource_id: nil)
         body = { name: name, resourceType: resource_type, resourceId: resource_id }.compact
-        client.post 'tags', body: body
+        client.post WriteRequest.new(path: 'tags', body: body)
       end
 
       def update(id, name:)
-        client.patch "tags/#{id}", body: { name: name }
+        client.patch WriteRequest.new(path: "tags/#{id}", body: { name: name })
       end
 
       def destroy(id)

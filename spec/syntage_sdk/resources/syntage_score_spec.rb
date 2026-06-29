@@ -11,7 +11,7 @@ RSpec.describe SyntageSdk::Resources::SyntageScore do
       syntage_score.calculate
 
       expect(client).to have_received(:post)
-        .with('entities/ent_123/datasources/syntage/score/calculate', body: {})
+        .with(an_object_having_attributes(path: 'entities/ent_123/datasources/syntage/score/calculate', body: {}))
     end
 
     it 'returns the client response' do
