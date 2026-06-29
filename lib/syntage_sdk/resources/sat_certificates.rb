@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'date'
+
 module SyntageSdk
   module Resources
     class SatCertificates < EntityScopedResource
@@ -29,6 +31,10 @@ module SyntageSdk
 
       def retrieve(id)
         retrieve_resource "datasources/mx/sat/certificados/#{id}"
+      end
+
+      def check_expiry(threshold_days: 30)
+        list valid_to: { after: Date.today.iso8601, strictly_before: (Date.today + threshold_days).iso8601 }
       end
     end
   end
