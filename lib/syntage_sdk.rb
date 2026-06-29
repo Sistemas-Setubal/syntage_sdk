@@ -108,6 +108,10 @@ module SyntageSdk
       Resources::Tags.new
     end
 
+    def addresses
+      Resources::Addresses.new
+    end
+
     def schedulers
       Resources::Schedulers.new
     end
