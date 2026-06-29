@@ -34,7 +34,8 @@ module SyntageSdk
       end
 
       def check_expiry(threshold_days: 30)
-        list valid_to: { after: Date.today.iso8601, strictly_before: (Date.today + threshold_days).iso8601 }
+        today = Date.today
+        list valid_to: { after: today.iso8601, strictly_before: (today + threshold_days).iso8601 }
       end
     end
   end
