@@ -35,35 +35,35 @@ RSpec.describe SyntageSdk::Resources::Tags do
     it 'posts to the tags path' do
       tags.create name: 'urgent', resource_type: 'invoice'
 
-      expect(client).to have_received(:post).with('tags', anything)
+      expect(client).to have_received(:post).with(an_object_having_attributes(path: 'tags'))
     end
 
     it 'sends name in the body' do
       tags.create name: 'urgent', resource_type: 'invoice'
 
       expect(client).to have_received(:post)
-        .with(anything, body: hash_including(name: 'urgent'))
+        .with(an_object_having_attributes(body: hash_including(name: 'urgent')))
     end
 
     it 'sends resourceType in the body' do
       tags.create name: 'urgent', resource_type: 'invoice'
 
       expect(client).to have_received(:post)
-        .with(anything, body: hash_including(resourceType: 'invoice'))
+        .with(an_object_having_attributes(body: hash_including(resourceType: 'invoice')))
     end
 
     it 'sends resourceId when provided' do
       tags.create name: 'urgent', resource_type: 'invoice', resource_id: 'inv_123'
 
       expect(client).to have_received(:post)
-        .with(anything, body: hash_including(resourceId: 'inv_123'))
+        .with(an_object_having_attributes(body: hash_including(resourceId: 'inv_123')))
     end
 
     it 'omits resourceId when not provided' do
       tags.create name: 'urgent', resource_type: 'invoice'
 
       expect(client).to have_received(:post)
-        .with(anything, body: satisfy { |b| !b.key?(:resourceId) })
+        .with(an_object_having_attributes(body: satisfy { |b| !b.key?(:resourceId) }))
     end
 
     it 'returns the client response' do
@@ -75,14 +75,14 @@ RSpec.describe SyntageSdk::Resources::Tags do
     it 'patches the tags path with the given id' do
       tags.update 'tag_123', name: 'reviewed'
 
-      expect(client).to have_received(:patch).with('tags/tag_123', anything)
+      expect(client).to have_received(:patch).with(an_object_having_attributes(path: 'tags/tag_123'))
     end
 
     it 'sends name in the body' do
       tags.update 'tag_123', name: 'reviewed'
 
       expect(client).to have_received(:patch)
-        .with(anything, body: hash_including(name: 'reviewed'))
+        .with(an_object_having_attributes(body: hash_including(name: 'reviewed')))
     end
 
     it 'returns the client response' do

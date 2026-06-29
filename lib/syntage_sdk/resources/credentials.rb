@@ -9,7 +9,7 @@ module SyntageSdk
 
       def create_ciec(rfc:, password:)
         body = { type: 'ciec', rfc: rfc, password: password }
-        client.post PATH, body: body
+        client.post WriteRequest.new(path: PATH, body: body)
       end
 
       def create_efirma(certificate:, private_key:, password:)
@@ -19,7 +19,7 @@ module SyntageSdk
           privateKey: encode(private_key),
           password: password
         }
-        client.post PATH, body: body
+        client.post WriteRequest.new(path: PATH, body: body)
       end
 
       private

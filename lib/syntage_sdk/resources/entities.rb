@@ -9,7 +9,7 @@ module SyntageSdk
 
       def create(name:, type:, **options)
         body = { name: name, type: type }.merge(optional(options))
-        client.post PATH, body: body
+        client.post WriteRequest.new(path: PATH, body: body)
       end
 
       private

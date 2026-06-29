@@ -103,7 +103,7 @@ RSpec.describe SyntageSdk::Client do
     before { allow(HTTParty).to receive(:post).and_return(response) }
 
     it 'serializes the body as JSON' do
-      client.post 'taxpayers', body: { rfc: 'XAXX010101000' }
+      client.post SyntageSdk::WriteRequest.new(path: 'taxpayers', body: { rfc: 'XAXX010101000' })
 
       expect(HTTParty).to have_received(:post)
         .with(anything, hash_including(body: '{"rfc":"XAXX010101000"}'))
@@ -116,28 +116,52 @@ RSpec.describe SyntageSdk::Client do
     before { allow(HTTParty).to receive(:patch).and_return(response) }
 
     it 'calls HTTParty.patch with the correct URL' do
-      client.patch 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' }
+      client.patch SyntageSdk::WriteRequest.new(path: 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' })
 
       expect(HTTParty).to have_received(:patch)
         .with('https://api.example.com/shareholders/sh_1', anything)
     end
 
     it 'serializes the body as JSON' do
-      client.patch 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' }
+      client.patch SyntageSdk::WriteRequest.new(path: 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' })
 
       expect(HTTParty).to have_received(:patch)
         .with(anything, hash_including(body: '{"name":"NUEVO NOMBRE"}'))
     end
 
     it 'sends application/merge-patch+json as Content-Type' do
-      client.patch 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' }
+      client.patch SyntageSdk::WriteRequest.new(path: 'shareholders/sh_1', body: { name: 'NUEVO NOMBRE' })
 
       expect(HTTParty).to have_received(:patch)
         .with(anything, hash_including(headers: hash_including('Content-Type' => 'application/merge-patch+json')))
     end
 
     it 'returns a wrapped response' do
-      expect(client.patch('shareholders/sh_1', body: {})).to be_a(SyntageSdk::Response)
+      expect(client.patch(SyntageSdk::WriteRequest.new(path: 'shareholders/sh_1', body: {}))).to be_a(SyntageSdk::Response)
+    end
+  end
+
+  describe 'when putting a resource' do
+    let(:response) { http_response 200, body: { 'id' => 'sch_1' } }
+
+    before { allow(HTTParty).to receive(:put).and_return(response) }
+
+    it 'calls HTTParty.put with the correct URL' do
+      client.put SyntageSdk::WriteRequest.new(path: 'schedulers/sch_1', body: { name: 'NUEVO' })
+
+      expect(HTTParty).to have_received(:put)
+        .with('https://api.example.com/schedulers/sch_1', anything)
+    end
+
+    it 'serializes the body as JSON' do
+      client.put SyntageSdk::WriteRequest.new(path: 'schedulers/sch_1', body: { name: 'NUEVO' })
+
+      expect(HTTParty).to have_received(:put)
+        .with(anything, hash_including(body: '{"name":"NUEVO"}'))
+    end
+
+    it 'returns a wrapped response' do
+      expect(client.put(SyntageSdk::WriteRequest.new(path: 'schedulers/sch_1', body: {}))).to be_a(SyntageSdk::Response)
     end
   end
 
@@ -238,15 +262,16 @@ RSpec.describe SyntageSdk::Client do
     end
 
     it 'raises a ValidationError' do
-      expect { client.post('entities', body: {}) }.to raise_error(SyntageSdk::ValidationError)
+      expect { client.post(SyntageSdk::WriteRequest.new(path: 'entities', body: {})) }.to raise_error(SyntageSdk::ValidationError)
     end
 
     it 'includes the API detail in the message' do
-      expect { client.post('entities', body: {}) }.to raise_error(/name is required/)
+      expect { client.post(SyntageSdk::WriteRequest.new(path: 'entities', body: {})) }
+        .to raise_error(/name is required/)
     end
 
     it 'exposes the response body on the error' do
-      expect { client.post('entities', body: {}) }
+      expect { client.post(SyntageSdk::WriteRequest.new(path: 'entities', body: {})) }
         .to raise_error(an_object_having_attributes(body: { 'message' => 'name is required' }))
     end
   end
@@ -258,7 +283,7 @@ RSpec.describe SyntageSdk::Client do
     end
 
     it 'raises a ForbiddenError' do
-      expect { client.post('entities', body: {}) }.to raise_error(SyntageSdk::ForbiddenError)
+      expect { client.post(SyntageSdk::WriteRequest.new(path: 'entities', body: {})) }.to raise_error(SyntageSdk::ForbiddenError)
     end
   end
 

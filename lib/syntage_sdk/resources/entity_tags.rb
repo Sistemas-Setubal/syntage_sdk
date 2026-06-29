@@ -17,11 +17,11 @@ module SyntageSdk
       end
 
       def create(entity_id:, name:)
-        client.post 'entity-tags', body: { entityId: entity_id, name: name }
+        client.post WriteRequest.new(path: 'entity-tags', body: { entityId: entity_id, name: name })
       end
 
       def update(id, name:)
-        client.patch "entity-tags/#{id}", body: { name: name }
+        client.patch WriteRequest.new(path: "entity-tags/#{id}", body: { name: name })
       end
 
       def destroy(id)

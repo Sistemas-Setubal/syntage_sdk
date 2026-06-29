@@ -41,12 +41,12 @@ module SyntageSdk
           name:         fetch_required(attributes, :name),
           shares:       fetch_required(attributes, :shares)
         }.merge(attributes.slice(*CREATE_OPTIONAL).compact)
-        client.post "entities/#{entity_id}/shareholders", body: body
+        client.post WriteRequest.new(path: "entities/#{entity_id}/shareholders", body: body)
       end
 
       def update(id, **options)
         body = options.slice(*UPDATE_OPTIONAL).compact
-        client.patch "shareholders/#{id}", body: body
+        client.patch WriteRequest.new(path: "shareholders/#{id}", body: body)
       end
 
       def delete(id)
