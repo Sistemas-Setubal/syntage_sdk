@@ -6,18 +6,27 @@ module SyntageSdk
       include Listable
       include Retrievable
 
-      LIST = ListConfig.new(filters: {}).freeze
+      FILTERS = {
+        id_lt: 'id[lt]',
+        id_gt: 'id[gt]'
+      }.freeze
+
+      LIST = ListConfig.new(filters: FILTERS).freeze
 
       def list(**options)
         list_collection 'entity-tags', LIST, options
+      end
+
+      def list_for_entity(entity_id:, **options)
+        list_collection "entities/#{entity_id}/tags", LIST, options
       end
 
       def retrieve(id)
         retrieve_resource "entity-tags/#{id}"
       end
 
-      def create(entity_id:, name:)
-        client.post WriteRequest.new(path: 'entity-tags', body: { entityId: entity_id, name: name })
+      def create(name:)
+        client.post WriteRequest.new(path: 'entity-tags', body: { name: name })
       end
 
       def update(id, name:)

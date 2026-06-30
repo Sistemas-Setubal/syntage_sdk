@@ -40,7 +40,7 @@ module SyntageSdk
         client.put WriteRequest.new(path: "#{PATH}/#{id}", body: optional(options))
       end
 
-      def delete(id)
+      def destroy(id)
         client.delete "#{PATH}/#{id}"
       end
 

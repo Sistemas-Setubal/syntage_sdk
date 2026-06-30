@@ -26,8 +26,59 @@ RSpec.describe SyntageSdk::Resources::EntityTags do
       expect(client).to have_received(:get).with(anything, hash_including(query: {}))
     end
 
+    it 'maps id_lt to the bracketed cursor param' do
+      entity_tags.list id_lt: 'etag_500'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('id[lt]' => 'etag_500')))
+    end
+
+    it 'maps id_gt to the bracketed cursor param' do
+      entity_tags.list id_gt: 'etag_100'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('id[gt]' => 'etag_100')))
+    end
+
     it 'returns the client response' do
       expect(entity_tags.list).to be(response)
+    end
+  end
+
+  describe '#list_for_entity' do
+    it 'gets the entity-scoped tags path' do
+      entity_tags.list_for_entity entity_id: 'ent_123'
+
+      expect(client).to have_received(:get).with('entities/ent_123/tags', anything)
+    end
+
+    it 'requests the JSON-LD representation' do
+      entity_tags.list_for_entity entity_id: 'ent_123'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('Accept' => 'application/ld+json')))
+    end
+
+    it 'requires the entity_id keyword' do
+      expect { entity_tags.list_for_entity }.to raise_error(ArgumentError)
+    end
+
+    it 'maps id_lt to the bracketed cursor param' do
+      entity_tags.list_for_entity entity_id: 'ent_123', id_lt: 'etag_500'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('id[lt]' => 'etag_500')))
+    end
+
+    it 'maps items_per_page to the camelCase param' do
+      entity_tags.list_for_entity entity_id: 'ent_123', items_per_page: 20
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('itemsPerPage' => 20)))
+    end
+
+    it 'returns the client response' do
+      expect(entity_tags.list_for_entity(entity_id: 'ent_123')).to be(response)
     end
   end
 
@@ -52,27 +103,24 @@ RSpec.describe SyntageSdk::Resources::EntityTags do
 
   describe '#create' do
     it 'posts to the entity-tags path' do
-      entity_tags.create entity_id: 'ent_123', name: 'vip'
+      entity_tags.create name: 'vip'
 
       expect(client).to have_received(:post).with(an_object_having_attributes(path: 'entity-tags'))
     end
 
-    it 'sends entityId in the body' do
-      entity_tags.create entity_id: 'ent_123', name: 'vip'
-
-      expect(client).to have_received(:post)
-        .with(an_object_having_attributes(body: hash_including(entityId: 'ent_123')))
-    end
-
     it 'sends name in the body' do
-      entity_tags.create entity_id: 'ent_123', name: 'vip'
+      entity_tags.create name: 'vip'
 
       expect(client).to have_received(:post)
         .with(an_object_having_attributes(body: hash_including(name: 'vip')))
     end
 
+    it 'requires the name keyword' do
+      expect { entity_tags.create }.to raise_error(ArgumentError)
+    end
+
     it 'returns the client response' do
-      expect(entity_tags.create(entity_id: 'ent_123', name: 'vip')).to be(response)
+      expect(entity_tags.create(name: 'vip')).to be(response)
     end
   end
 

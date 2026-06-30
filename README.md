@@ -111,6 +111,64 @@ The valid `datasources` identifiers are not listed in the API reference; they ar
 passed through as-is and validated by the API (a `400` comes back as a
 `SyntageSdk::ValidationError` with the details). `sat` is one known valid value.
 
+### Entity tags
+
+Entity tags are reusable labels you can attach to entities.
+
+List entity tags (`GET /entity-tags`) as a JSON-LD collection. The endpoint
+supports `items_per_page` and cursor pagination through `id_lt` / `id_gt` (mapped
+to the API's `id[lt]` / `id[gt]` params):
+
+```ruby
+response = SyntageSdk.entity_tags.list(items_per_page: 20)
+response.body['hydra:member'] # the entity tags
+
+# next page, after the last id seen
+SyntageSdk.entity_tags.list(items_per_page: 20, id_lt: 'a224731b-…')
+```
+
+List the tags of a single entity (`GET /entities/:entity_id/tags`) as a JSON-LD
+collection. `entity_id` is a required keyword argument and it accepts the same
+`items_per_page` / `id_lt` / `id_gt` options:
+
+```ruby
+response = SyntageSdk.entity_tags.list_for_entity(entity_id: 'a21df628-…')
+response.body['hydra:member'] # the entity's tags
+```
+
+Create an entity tag (`POST /entity-tags`, returns `201`). `name` is the only
+field; it is a required keyword argument, so omitting it raises an `ArgumentError`
+before any request is made:
+
+```ruby
+response = SyntageSdk.entity_tags.create(name: 'vip')
+
+response.status     # 201
+response.body['id'] # the created entity tag id
+```
+
+Retrieve a single entity tag by id (`GET /entity-tags/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.entity_tags.retrieve('a224731b-…')
+response.body # the entity tag
+```
+
+Update an entity tag's name (`PATCH /entity-tags/:id`, returns `200`). The request
+is sent as a JSON merge patch:
+
+```ruby
+response = SyntageSdk.entity_tags.update('a224731b-…', name: 'premium')
+response.body # the updated entity tag
+```
+
+Delete an entity tag by id (`DELETE /entity-tags/:id`, returns `204`):
+
+```ruby
+response = SyntageSdk.entity_tags.destroy('a224731b-…')
+response.status # 204
+```
+
 ### Credentials
 
 Register SAT credentials for a taxpayer so the API can extract their data. There
@@ -737,7 +795,62 @@ response.body # the updated scheduler
 Delete a scheduler by id (`DELETE /schedulers/:id`, returns `204`):
 
 ```ruby
-response = SyntageSdk.schedulers.delete('91106968-…')
+response = SyntageSdk.schedulers.destroy('91106968-…')
+response.status # 204
+```
+
+### Scheduler rules
+
+Scheduler rules attach an extractor to a scheduler so it runs on a cron schedule.
+
+Create a rule (`POST /schedulers/rules`, returns `202`). `scheduler` (a scheduler
+IRI) and `extractor` are required; `options` and `cron_expression` are optional:
+
+```ruby
+response = SyntageSdk.scheduler_rules.create(
+  scheduler: '/schedulers/91106968-…', # required, scheduler IRI
+  extractor: 'invoice',                # required, e.g. invoice, tax_status, rug
+  cron_expression: '@daily',           # optional, mapped to cronExpression
+  options: {                           # optional, extractor-specific, sent as-is
+    types: ['I', 'E', 'P'],
+    period: { from: '2020-01-01T00:00:00.000Z', to: '2020-03-31T23:59:59.000Z' }
+  }
+)
+
+response.status     # 202
+response.body['id'] # the created rule id
+```
+
+`cron_expression` is mapped to the API's `cronExpression` field. The `options`
+Hash is forwarded verbatim — its inner keys are **not** camelCased, so use the
+names each extractor expects (see the API reference for valid options per
+extractor).
+
+Retrieve a single rule by id (`GET /schedulers/rules/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.scheduler_rules.retrieve('e0a24894-…')
+response.body # the rule
+```
+
+Update a rule by id (`PUT /schedulers/rules/:id`, returns `200`). All fields are
+optional for partial updates:
+
+```ruby
+response = SyntageSdk.scheduler_rules.update(
+  'e0a24894-…',
+  extractor: 'tax_status',   # optional
+  cron_expression: '@weekly', # optional, mapped to cronExpression
+  options: { types: ['I'] }   # optional
+)
+
+response.body # the updated rule
+```
+
+Delete a rule by id (`DELETE /schedulers/rules/:id`, returns `204`):
+
+```ruby
+response = SyntageSdk.scheduler_rules.destroy('e0a24894-…')
 response.status # 204
 ```
 
