@@ -120,6 +120,10 @@ module SyntageSdk
       Resources::SchedulerRules.new
     end
 
+    def exports
+      Resources::Exports.new
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil

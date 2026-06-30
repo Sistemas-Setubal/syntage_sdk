@@ -854,6 +854,34 @@ response = SyntageSdk.scheduler_rules.destroy('e0a24894-…')
 response.status # 204
 ```
 
+### Exports
+
+Generate an export of a collection's data as a file (`POST /exports`, returns
+`202`). `format` (`csv`, `xlsx` or `json`) and `uri` (the collection to export,
+e.g. an entity's invoices) are required; `file_types` is optional and mapped to
+the API's `fileTypes` field:
+
+```ruby
+response = SyntageSdk.exports.create(
+  format: 'csv',                                        # required: csv, xlsx or json
+  uri: '/entities/a1fbec32-…/invoices',                 # required, collection to export
+  file_types: ['invoice.cfdi.xml', 'invoice.cfdi.pdf'] # optional
+)
+
+response.status     # 202
+response.body['id'] # the created export id
+```
+
+The export runs asynchronously, so the response comes back with a `pending` /
+`running` status. Poll the export by id to get its final status and the generated
+file (`GET /exports/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.exports.retrieve('a1fbec32-…')
+response.body['status'] # pending, running, finished or failed
+response.body['file']   # the generated file, once finished
+```
+
 ### Errors and retries
 
 Non-success responses raise:
