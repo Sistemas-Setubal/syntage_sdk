@@ -220,15 +220,15 @@ rfc: 'PEGJ850101HM2'
     end
   end
 
-  describe '#delete' do
+  describe '#destroy' do
     it 'deletes the global shareholders path' do
-      shareholders.delete 'sh_123'
+      shareholders.destroy 'sh_123'
 
       expect(client).to have_received(:delete).with('shareholders/sh_123')
     end
 
     it 'returns the client response' do
-      expect(shareholders.delete('sh_123')).to be(response)
+      expect(shareholders.destroy('sh_123')).to be(response)
     end
   end
 end

@@ -167,15 +167,15 @@ RSpec.describe SyntageSdk::Resources::Schedulers do
     end
   end
 
-  describe '#delete' do
+  describe '#destroy' do
     it 'deletes the scheduler path with the id' do
-      schedulers.delete 'sch_1'
+      schedulers.destroy 'sch_1'
 
       expect(client).to have_received(:delete).with('schedulers/sch_1')
     end
 
     it 'returns the client response' do
-      expect(schedulers.delete('sch_1')).to be(response)
+      expect(schedulers.destroy('sch_1')).to be(response)
     end
   end
 end

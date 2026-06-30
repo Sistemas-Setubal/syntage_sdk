@@ -49,7 +49,7 @@ module SyntageSdk
         client.patch WriteRequest.new(path: "shareholders/#{id}", body: body)
       end
 
-      def delete(id)
+      def destroy(id)
         client.delete "shareholders/#{id}"
       end
 
