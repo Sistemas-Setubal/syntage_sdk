@@ -13,8 +13,14 @@ to make traceability and usage control easy.
 
 ## Installation
 
-The code lives as a gem under `lib/`. While it is not published yet, you can
-point to it from your `Gemfile`:
+The gem is not published to RubyGems.org; consuming apps point to this
+GitHub repository directly, pinned to a release tag:
+
+```ruby
+gem 'syntage_sdk', git: 'https://github.com/Sistemas-Setubal/syntage_sdk.git', tag: 'vX.Y.Z'
+```
+
+For local development against an unreleased change, point to a path instead:
 
 ```ruby
 gem 'syntage_sdk', path: 'path/to/syntage_sdk'
@@ -1433,3 +1439,24 @@ bin/rubocop        # style
 bin/reek lib       # code smells
 bundle exec rspec  # tests with coverage (min. 95% line / 90% branch)
 ```
+
+### Versioning and releases
+
+This gem follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+(`MAJOR.MINOR.PATCH`). To cut a release:
+
+1. Update `CHANGELOG.md`: move the relevant entries from `[Unreleased]` into
+   a new `## [X.Y.Z] - YYYY-MM-DD` section, following
+   [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+2. Bump `SyntageSdk::VERSION` in `lib/syntage_sdk/version.rb` to match.
+3. Commit both changes, then tag the commit and push the tag:
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+Pushing a `v*` tag triggers the `Release` workflow
+(`.github/workflows/release.yml`), which builds the gem and publishes a
+GitHub Release with the `.gem` file attached. The gem is not yet published
+to RubyGems.org.
