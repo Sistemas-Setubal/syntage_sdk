@@ -7,9 +7,16 @@ module SyntageSdk
 
       OPTIONAL_FIELDS = %i[rfc datasources].freeze
 
+      UPDATE_FIELDS = %i[name tags].freeze
+
       def create(name:, type:, **options)
         body = { name: name, type: type }.merge(optional(options))
         client.post WriteRequest.new(path: PATH, body: body)
+      end
+
+      def update(id, **options)
+        body = options.slice(*UPDATE_FIELDS).compact
+        client.patch WriteRequest.new(path: "#{PATH}/#{id}", body: body)
       end
 
       private

@@ -111,6 +111,20 @@ The valid `datasources` identifiers are not listed in the API reference; they ar
 passed through as-is and validated by the API (a `400` comes back as a
 `SyntageSdk::ValidationError` with the details). `sat` is one known valid value.
 
+Update an entity by id (`PATCH /entities/:id`, returns `200`). `name` and `tags`
+are optional and only sent when provided; passing `tags` (entity tag IRIs)
+**replaces** the entity's current tags:
+
+```ruby
+response = SyntageSdk.entities.update(
+  'a1fbec32-…',
+  name: 'Syntage',          # optional
+  tags: ['/entity-tags/abc'] # optional, replaces existing tags
+)
+
+response.body # the updated entity
+```
+
 ### Entity tags
 
 Entity tags are reusable labels you can attach to entities.
@@ -881,6 +895,32 @@ response = SyntageSdk.exports.retrieve('a1fbec32-…')
 response.body['status'] # pending, running, finished or failed
 response.body['file']   # the generated file, once finished
 ```
+
+### Files
+
+Retrieve a file's metadata by id (`GET /files/:id`, returns `200`) as a JSON-LD
+object. The metadata includes its `type`, `mimeType`, `extension`, `size`,
+`filename` and the IRI of the resource it belongs to:
+
+```ruby
+response = SyntageSdk.files.retrieve('91106968-…')
+response.body['filename'] # the suggested filename
+response.body['mimeType'] # the media type
+```
+
+This endpoint returns metadata only, not the file bytes.
+
+Download the file content by id (`GET /files/:id/download`, returns `200`). The
+API responds with a redirect to a short-lived download URL, which HTTParty follows
+automatically, so `response.body` holds the raw file bytes (XML, PDF, XLSX, JSON
+or ZIP). The request accepts any content type, so the bytes are never parsed:
+
+```ruby
+response = SyntageSdk.files.download('91106968-…')
+File.binwrite('invoice.pdf', response.body)
+```
+
+Pair it with `retrieve` to get the right filename and extension for the bytes.
 
 ### Errors and retries
 
