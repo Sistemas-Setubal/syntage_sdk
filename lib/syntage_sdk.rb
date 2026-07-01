@@ -124,6 +124,10 @@ module SyntageSdk
       Resources::Exports.new
     end
 
+    def files
+      Resources::Files.new
+    end
+
     def reset_configuration!
       @configuration = Configuration.new
       @client = nil

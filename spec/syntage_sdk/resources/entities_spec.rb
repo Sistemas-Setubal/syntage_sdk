@@ -3,7 +3,7 @@ require 'syntage_sdk'
 RSpec.describe SyntageSdk::Resources::Entities do
   subject(:entities) { described_class.new client }
 
-  let(:client) { instance_double SyntageSdk::Client, post: response }
+  let(:client) { instance_double SyntageSdk::Client, post: response, patch: response }
   let(:response) { instance_double SyntageSdk::Response }
 
   describe '#create' do
@@ -50,6 +50,47 @@ RSpec.describe SyntageSdk::Resources::Entities do
 
     it 'returns the client response' do
       expect(entities.create(name: 'Acme', type: 'company')).to be(response)
+    end
+  end
+
+  describe '#update' do
+    it 'patches the entity path with the id' do
+      entities.update 'ent_1', name: 'Syntage'
+
+      expect(client).to have_received(:patch)
+        .with(an_object_having_attributes(path: 'entities/ent_1'))
+    end
+
+    it 'includes the name when given' do
+      entities.update 'ent_1', name: 'Syntage'
+
+      expect(client).to have_received(:patch)
+        .with(an_object_having_attributes(body: hash_including(name: 'Syntage')))
+    end
+
+    it 'includes the tags when given' do
+      entities.update 'ent_1', tags: ['/entity-tags/abc']
+
+      expect(client).to have_received(:patch)
+        .with(an_object_having_attributes(body: hash_including(tags: ['/entity-tags/abc'])))
+    end
+
+    it 'omits fields that are not given' do
+      entities.update 'ent_1', name: 'Syntage'
+
+      expect(client).to have_received(:patch)
+        .with(an_object_having_attributes(body: hash_excluding(:tags)))
+    end
+
+    it 'drops unknown fields' do
+      entities.update 'ent_1', name: 'Syntage', type: 'person'
+
+      expect(client).to have_received(:patch)
+        .with(an_object_having_attributes(body: hash_excluding(:type)))
+    end
+
+    it 'returns the client response' do
+      expect(entities.update('ent_1', name: 'Syntage')).to be(response)
     end
   end
 end
