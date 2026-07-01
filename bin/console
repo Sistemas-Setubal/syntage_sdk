@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require 'irb'
+
+$LOAD_PATH.unshift File.expand_path('../lib', __dir__)
+require 'syntage_sdk'
+
+IRB.start(__FILE__)
