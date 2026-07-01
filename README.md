@@ -395,29 +395,334 @@ File.binwrite('invoice.pdf', pdf.body)
 
 Any other `format:` raises `ArgumentError`.
 
+### Insights
+
+Insights are analytics computed from an entity's data. Get an entity-scoped
+insights object with `SyntageSdk.insights(entity_id)`; the top-level analytics
+hang off it directly, and related metrics are grouped under `metrics`,
+`accounting`, `concentration` and `products` accessors. Every insight is a `GET`
+that returns `200`.
+
+```ruby
+insights = SyntageSdk.insights('a1fd8884-…')
+```
+
+Most insights accept an optional `from:` / `to:` date window (sent as the API's
+`options[from]` / `options[to]` query params); `summary` and `scores` take no
+arguments.
+
+The analytics that live directly under `/insights/` hang off `insights` itself:
+
+```ruby
+insights.summary                                       # GET .../insights/summary
+insights.sales_revenue(from: '2022-01-01T00:00:00Z')   # GET .../insights/sales-revenue
+insights.expenditures                                  # GET .../insights/expenditures
+insights.financial_institutions                        # GET .../insights/financial-institutions
+insights.employees                                     # GET .../insights/employees
+insights.rpc_shareholders                              # GET .../insights/rpc-shareholders
+insights.government_customers                          # GET .../insights/government-customers
+insights.invoicing_blacklist                           # GET .../insights/invoicing-blacklist
+insights.risks                                         # GET .../insights/risks
+```
+
+#### Metrics
+
+The insights under `/insights/metrics/` hang off `insights.metrics`:
+
+```ruby
+insights.metrics.scores                       # GET .../insights/metrics/scores
+insights.metrics.balance_sheet                # GET .../insights/metrics/balance-sheet
+insights.metrics.income_statement             # GET .../insights/metrics/income-statement
+insights.metrics.customer_network             # GET .../insights/metrics/customer-network
+insights.metrics.vendor_network               # GET .../insights/metrics/vendor-network
+insights.metrics.invoicing_annual_comparison  # GET .../insights/metrics/invoicing-annual-comparison
+```
+
 `scores` takes no arguments — it aggregates the entity's scores from every
-configured source (Syntage Score and any third-party providers):
+configured source (Syntage Score and any third-party providers). `balance_sheet`,
+`income_statement` and `invoicing_annual_comparison` accept `from:` / `to:` plus an
+optional `format:`, which is forwarded as the `X-Insight-Format` request header:
 
 ```ruby
-insights.metrics.scores            # GET .../insights/metrics/scores
+insights.metrics.balance_sheet(from: '2022-01-01T00:00:00Z', to: '2022-12-31T23:59:59Z')
+insights.metrics.income_statement(format: 'condensed')
 ```
 
-Some insights live directly under `/insights/` (not `metrics`), so they hang off
-`insights` itself. `financial_ratios` returns liquidity, leverage, profitability,
-and efficiency ratios per fiscal year, and accepts the same `from:` / `to:`
-date filters (no `format:`):
+#### Accounting
+
+Accounting insights hang off `insights.accounting`. Besides `from:` / `to:`, some
+accept `periodicity:` (`yearly` — the default — or `monthly`), and `cash_flow_stats`
+also accepts `type:`:
 
 ```ruby
-insights.financial_ratios                                  # GET .../insights/financial-ratios
-insights.financial_ratios(from: '2022-01-01T00:00:00Z')    # options[from]
+insights.accounting.financial_ratios                        # GET .../insights/financial-ratios
+insights.accounting.trial_balance(periodicity: 'monthly')   # GET .../insights/trial-balance
+insights.accounting.cash_flow_stats(periodicity: 'monthly') # GET .../insights/cash-flow-stats
+insights.accounting.accounts_payable                        # GET .../insights/accounts-payable
+insights.accounting.accounts_receivable                     # GET .../insights/accounts-receivable
 ```
 
-`trial_balance` returns the trial-balance accounts; besides `from:` / `to:` it
-accepts `periodicity:` (`yearly` — the default — or `monthly`):
+`financial_ratios` returns liquidity, leverage, profitability and efficiency ratios
+per fiscal year; `trial_balance` returns the trial-balance accounts.
+
+#### Concentration
+
+Concentration insights hang off `insights.concentration`. `invoicing` requires a
+`type:` argument; `customer` and `supplier` accept only `from:` / `to:`:
 
 ```ruby
-insights.trial_balance                                     # GET .../insights/trial-balance
-insights.trial_balance(periodicity: 'monthly')             # options[periodicity]
+insights.concentration.invoicing(type: 'issued')  # GET .../insights/invoicing-concentration
+insights.concentration.customer                    # GET .../insights/customer-concentration
+insights.concentration.supplier                    # GET .../insights/supplier-concentration
+```
+
+#### Products
+
+Products insights hang off `insights.products`, listing the products and services
+the entity sold or bought (both accept `from:` / `to:`):
+
+```ruby
+insights.products.sold    # GET .../insights/products-and-services-sold
+insights.products.bought  # GET .../insights/products-and-services-bought
+```
+
+### Tax returns
+
+List an entity's tax returns (`GET /entities/:entity_id/tax-returns`) as a JSON-LD
+(Hydra) collection. `entity_id:` is required. Filters: `type`, `interval_unit`,
+`complementary`, `capture_line`, `operation_number`, `fiscal_year`, `period`; date
+ranges on `presented_at` and `created_at`
+(`{ before:, after:, strictly_before:, strictly_after: }`); ordering via
+`order: { period:, presented_at: }`; and the usual cursor pagination
+(`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.tax_returns.list(
+  entity_id: '91106968-…',
+  fiscal_year: 2026,
+  order:       { presented_at: 'desc' }
+)
+
+body = response.body
+body['hydra:member'] # array of tax returns
+body['hydra:view']   # cursor navigation links
+```
+
+Retrieve a single tax return by id (`GET /tax-returns/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.tax_returns.retrieve('91106968-…')
+response.body # the tax return record
+```
+
+Fetch the parsed data of a tax return (`GET /tax-returns/:id/data`) as JSON:
+
+```ruby
+response = SyntageSdk.tax_returns.data('91106968-…')
+response.body # the tax return data
+```
+
+### Shareholders
+
+List an entity's shareholders (`GET /entities/:entity_id/shareholders`) as a
+JSON-LD (Hydra) collection. `entity_id:` is required. Filters: `type`, `name`,
+`rfc`; ordering via `order: { name:, created_at:, updated_at: }`; and the usual
+cursor pagination (`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+response = SyntageSdk.shareholders.list(
+  entity_id: '91106968-…',
+  order:     { name: 'asc' }
+)
+
+body = response.body
+body['hydra:member'] # array of shareholders
+body['hydra:view']   # cursor navigation links
+```
+
+List every shareholder across entities (`GET /shareholders`) with the same filters,
+ordering and pagination:
+
+```ruby
+response = SyntageSdk.shareholders.list_all(rfc: 'XAXX010101000')
+response.body['hydra:member'] # array of shareholders
+```
+
+Retrieve a single shareholder by id (`GET /shareholders/:id`) as a JSON-LD object:
+
+```ruby
+response = SyntageSdk.shareholders.retrieve('91106968-…')
+response.body # the shareholder record
+```
+
+Register a shareholder for an entity (`POST /entities/:entity_id/shareholders`,
+returns `201`). `entity_id:`, `relation_type:`, `name:` and `shares:` are required
+keyword arguments (omitting any raises an `ArgumentError` before any request is
+made); `rfc:` is optional:
+
+```ruby
+response = SyntageSdk.shareholders.create(
+  entity_id:     '91106968-…',
+  relation_type: 'shareholder',
+  name:          'Jane Doe',
+  shares:        150,
+  rfc:           'XAXX010101000' # optional
+)
+
+response.status     # 201
+response.body['id'] # the created shareholder id
+```
+
+Update a shareholder by id (`PATCH /shareholders/:id`, returns `200`). `name` and
+`rfc` are optional and only sent when provided:
+
+```ruby
+response = SyntageSdk.shareholders.update('91106968-…', name: 'Jane A. Doe')
+response.body # the updated shareholder
+```
+
+Delete a shareholder by id (`DELETE /shareholders/:id`, returns `204`):
+
+```ruby
+response = SyntageSdk.shareholders.destroy('91106968-…')
+response.status # 204
+```
+
+### SAT certificates
+
+Get the SAT digital certificates (CSD/FIEL) of an entity
+(`GET /entities/:entity_id/datasources/mx/sat/certificados`) as a JSON-LD (Hydra)
+collection. Bind the resource to an entity with `SyntageSdk.sat_certificates(entity_id)`.
+Filters: `serial_number`, `type`; date ranges on `valid_from`, `valid_to` and
+`created_at` (`{ before:, after:, strictly_before:, strictly_after: }`); ordering via
+`order: { valid_from:, valid_to: }`; and the usual cursor pagination
+(`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+certificates = SyntageSdk.sat_certificates('91106968-…')
+
+response = certificates.list(type: 'CSD', order: { valid_to: 'desc' })
+response.body['hydra:member'] # array of SAT certificates
+```
+
+Retrieve a single certificate by id (`GET /datasources/mx/sat/certificados/:id`) as
+a JSON-LD object:
+
+```ruby
+response = certificates.retrieve('91106968-…')
+response.body # the SAT certificate
+```
+
+`check_expiry` is a convenience wrapper over `list` that returns the certificates
+expiring within a window — those whose `valid_to` is after today but before
+`threshold_days` from now (default `30`):
+
+```ruby
+certificates.check_expiry                     # expiring within 30 days
+certificates.check_expiry(threshold_days: 90) # expiring within 90 days
+```
+
+### RUG (movable-property guarantees)
+
+The RUG (Registro Único de Garantías Mobiliarias) datasource exposes an entity's
+guarantees and operations. Bind the resource to an entity with
+`SyntageSdk.rug(entity_id)`. The list endpoints return JSON-LD (Hydra) collections
+with the usual cursor pagination (`id_lt` / `id_gt`, `items_per_page`).
+
+```ruby
+rug = SyntageSdk.rug('91106968-…')
+
+rug.guarantees(items_per_page: 50)  # GET .../datasources/rug/garantias
+rug.operations(items_per_page: 50)  # GET .../datasources/rug/operaciones
+```
+
+Retrieve a single guarantee or operation by id:
+
+```ruby
+rug.guarantee('91106968-…')  # GET /datasources/rug/garantias/:id
+rug.operation('91106968-…')  # GET /datasources/rug/operaciones/:id
+```
+
+### RPC entities
+
+The RPC (Registro Público de Comercio) datasource exposes the commercial-registry
+records tied to an entity. Bind the resource with `SyntageSdk.rpc_entities(entity_id)`.
+
+```ruby
+rpc = SyntageSdk.rpc_entities('91106968-…')
+
+response = rpc.list(items_per_page: 50) # GET .../datasources/rpc/entidades
+response.body['hydra:member']           # array of RPC records
+```
+
+Retrieve a single RPC record by id (`GET /datasources/rpc/entidades/:id`):
+
+```ruby
+response = rpc.retrieve('91106968-…')
+response.body # the RPC record
+```
+
+### Syntage Score
+
+Trigger the calculation of an entity's Syntage Score
+(`POST /entities/:entity_id/datasources/syntage/score/calculate`, returns `202`).
+Bind the resource with `SyntageSdk.syntage_score(entity_id)`. The calculation runs
+asynchronously; the request takes no body:
+
+```ruby
+response = SyntageSdk.syntage_score('91106968-…').calculate
+response.status # 202
+```
+
+### Tags
+
+Tags are labels you can attach to any taggable resource (invoices, entities, …),
+distinct from entity tags. List tags (`GET /tags`) as a JSON-LD collection with the
+usual cursor pagination (`id_lt` / `id_gt`, `items_per_page`):
+
+```ruby
+response = SyntageSdk.tags.list(items_per_page: 20)
+response.body['hydra:member'] # the tags
+```
+
+Create a tag (`POST /tags`, returns `202`). `name:` and `resource_type:` are
+required keyword arguments; `resource_id:` is optional and only sent when provided.
+`resource_type` and `resource_id` are mapped to the API's `resourceType` /
+`resourceId` fields:
+
+```ruby
+response = SyntageSdk.tags.create(
+  name:          'audited',
+  resource_type: 'invoice',
+  resource_id:   '/invoices/91106968-…' # optional
+)
+
+response.status     # 202
+response.body['id'] # the created tag id
+```
+
+Update a tag's name (`PATCH /tags/:id`, returns `200`):
+
+```ruby
+response = SyntageSdk.tags.update('91106968-…', name: 'reviewed')
+response.body # the updated tag
+```
+
+Delete a tag by id (`DELETE /tags/:id`, returns `204`):
+
+```ruby
+response = SyntageSdk.tags.destroy('91106968-…')
+response.status # 204
+```
+
+### Addresses
+
+Look up the neighborhoods (colonias) and municipality for a Mexican postal code
+(`GET /datasources/mx/addresses/:postal_code`, returns `200`):
+
+```ruby
+response = SyntageSdk.addresses.lookup('64000')
+response.body # the neighborhoods and municipality for the postal code
 ```
 
 ### Payments
