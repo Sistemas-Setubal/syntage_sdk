@@ -93,6 +93,34 @@ actions to endpoints, so the calling app does not build paths or bodies by hand.
 
 ### Entities
 
+List the entities in your organization (`GET /entities`) as a JSON-LD (Hydra)
+collection. `rfc` (mapped to the API's `taxpayer.id` param) and `name` filter by
+**partial match**, so compare the returned members when you need an exact RFC;
+`person_type` (`physical` / `legal`) is an exact match. Date filters
+(`registration_date`, `created_at`, `updated_at`) take a hash of
+`before` / `after` / `strictly_before` / `strictly_after`, ordering supports
+`created_at` and `updated_at`, and cursor pagination uses `id_lt` / `id_gt`:
+
+```ruby
+response = SyntageSdk.entities.list(rfc: 'XAXX010101000')
+response.body['hydra:member'] # the matching entities
+
+SyntageSdk.entities.list(
+  name: 'Acme',                            # partial match
+  person_type: 'legal',
+  registration_date: { after: '2020-01-01' },
+  order: { updated_at: 'desc' },
+  items_per_page: 50
+)
+```
+
+Retrieve a single entity by id (`GET /entities/:id`, returns `200`):
+
+```ruby
+response = SyntageSdk.entities.retrieve('a1fbec32-…')
+response.body # the entity, with taxpayer, credential and tag info
+```
+
 Register a taxpayer (`company` or `person`) and, optionally, the datasources to
 extract for it.
 
