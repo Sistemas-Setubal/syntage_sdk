@@ -24,6 +24,10 @@ module SyntageSdk
       Resources::Credentials.new
     end
 
+    def extractions
+      Resources::Extractions.new
+    end
+
     def events
       Resources::Events.new
     end

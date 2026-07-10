@@ -255,6 +255,68 @@ All arguments are required keyword arguments: omitting any raises an
 `ArgumentError` before any request is made. For e.firma the SDK uses
 `Base64.strict_encode64` (no line breaks), so do not pre-encode the inputs.
 
+### Extractions
+
+Trigger a one-off SAT data extraction for an entity (`POST /extractions`,
+returns `202`). The entity needs a valid credential for the requested
+`extractor` beforehand (see [Credentials](#credentials)):
+
+```ruby
+response = SyntageSdk.extractions.create(
+  entity: '/entities/a1fd8884-339d-4b4a-ba8f-9bb1231dddc9', # required, entity IRI
+  extractor: 'tax_status',                                  # required
+  options: { period: { from: '2026-01-01' } }                # optional, extractor-specific
+)
+
+response.status     # 202
+response.body['id'] # the created extraction id
+```
+
+`entity` and `extractor` are required keyword arguments: omitting either raises
+an `ArgumentError` before any request is made. `extractor` is not validated
+client-side (a value the API doesn't recognize surfaces as a `ValidationError`);
+known values include `tax_status`, `rif_tax_return`, `annual_tax_return`,
+`monthly_tax_return`, `electronic_accounting`, `rpc`, `rug`,
+`buro_de_credito_report`, `invoice`, `tax_retention`, `tax_compliance`,
+`background_check` and `sat_certificates`. `options` is optional and only sent
+when provided; some extractors (e.g. `annual_tax_return`) apply a default when
+it's omitted. `POST /extractions` can return `409 Conflict` if there's already
+a pending extraction for the same entity/extractor pair.
+
+List extractions (`GET /extractions`) as a JSON-LD collection:
+
+```ruby
+response = SyntageSdk.extractions.list(
+  extractor: 'tax_status',
+  status: 'finished',           # pending · finished · error, etc.
+  datasource: 'sat',
+  taxpayer_id: 'XAXX010101000', # filters by taxpayer.id
+  started_at: { after: '2026-01-01' },
+  finished_at: { before: '2026-06-01' },
+  order: { started_at: 'desc' }, # or a plain string, ordered by createdAt
+  items_per_page: 50
+)
+
+response.body['hydra:member'] # the extractions
+```
+
+Every argument is optional; unknown keys are ignored. Retrieve a single
+extraction by id (`GET /extractions/:id`):
+
+```ruby
+response = SyntageSdk.extractions.retrieve('a239f1c7-…')
+response.body['status'] # pending · finished · error, etc.
+```
+
+Stop an in-progress extraction (`DELETE /extractions/:id/stop`, returns `204`).
+The API returns `409` if the extraction is no longer stoppable (e.g. already
+finished):
+
+```ruby
+response = SyntageSdk.extractions.stop('a239f1c7-…')
+response.status # 204
+```
+
 ### Events
 
 Events report the outcome of asynchronous operations (e.g. `file.created`,
