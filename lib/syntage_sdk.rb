@@ -96,6 +96,10 @@ module SyntageSdk
       Resources::SyntageScore.new entity_id
     end
 
+    def tax_summary(entity_id)
+      Resources::TaxSummary.new entity_id
+    end
+
     def rpc_entities(entity_id)
       Resources::RpcEntities.new entity_id
     end
