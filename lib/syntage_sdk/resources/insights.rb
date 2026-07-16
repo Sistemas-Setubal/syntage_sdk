@@ -36,7 +36,7 @@ module SyntageSdk
       end
 
       def employees(**options)
-        client.get path('employees'), query: options_query(options, :from, :to)
+        client.get path('employees'), query: options_query(options, :from, :to, :periodicity)
       end
 
       def rpc_shareholders(**options)
