@@ -42,6 +42,10 @@ module SyntageSdk
       def data(id)
         client.get "tax-returns/#{id}/data", headers: { 'Accept' => 'application/json' }
       end
+
+      def pdf(id)
+        client.get "tax-returns/#{id}/pdf", headers: { 'Accept' => 'application/pdf' }
+      end
     end
   end
 end

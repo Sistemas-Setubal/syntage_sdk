@@ -198,4 +198,31 @@ RSpec.describe SyntageSdk::Resources::TaxReturns do
       expect(tax_returns.data(id)).to be(response)
     end
   end
+
+  describe '#pdf' do
+    let(:id) { 'a1fbecf9-0330-4821-886c-7d45da9c29f4' }
+
+    it 'gets the tax-return pdf path' do
+      tax_returns.pdf id
+
+      expect(client).to have_received(:get).with("tax-returns/#{id}/pdf", anything)
+    end
+
+    it 'requests the PDF representation' do
+      tax_returns.pdf id
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: { 'Accept' => 'application/pdf' }))
+    end
+
+    it 'does not send query params' do
+      tax_returns.pdf id
+
+      expect(client).to have_received(:get).with(anything, hash_excluding(:query))
+    end
+
+    it 'returns the client response' do
+      expect(tax_returns.pdf(id)).to be(response)
+    end
+  end
 end
