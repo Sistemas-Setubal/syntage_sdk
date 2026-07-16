@@ -171,6 +171,13 @@ RSpec.describe SyntageSdk::Resources::Insights do
         .with(anything, hash_including(query: hash_excluding('options[to]')))
     end
 
+    it 'maps periodicity to the options[periodicity] query param' do
+      insights.employees periodicity: 'monthly'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[periodicity]' => 'monthly')))
+    end
+
     it 'returns the client response' do
       expect(insights.employees).to be(response)
     end
