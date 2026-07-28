@@ -3,13 +3,20 @@
 module SyntageSdk
   module Resources
     class Exports < BaseResource
+      include Listable
       include Retrievable
 
       PATH = 'exports'
 
+      LIST = ListConfig.new(filters: { status: 'status', format: 'format', id: 'id' }).freeze
+
       OPTIONAL_FIELDS = {
         file_types: :fileTypes
       }.freeze
+
+      def list(**options)
+        list_collection PATH, LIST, options
+      end
 
       def create(format:, uri:, **options)
         body = { format: format, uri: uri }.merge(optional(options))
