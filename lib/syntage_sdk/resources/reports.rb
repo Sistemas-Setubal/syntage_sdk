@@ -10,6 +10,12 @@ module SyntageSdk
 
       LIST = ListConfig.new(filters: {}, orders: { created_at: 'createdAt' }).freeze
 
+      FIELDS = %i[name insights organizational].freeze
+
+      REQUIRED_FIELDS = %i[name insights].freeze
+
+      DEFAULTS = { organizational: false }.freeze
+
       def list(**options)
         list_collection PATH, LIST, options
       end
@@ -18,12 +24,12 @@ module SyntageSdk
         retrieve_resource "#{PATH}/#{id}"
       end
 
-      def create(name:, insights:, organizational: false)
-        client.post WriteRequest.new(path: PATH, body: body_for(name, insights, organizational))
+      def create(**options)
+        client.post WriteRequest.new(path: PATH, body: body(options))
       end
 
-      def update(id, name:, insights:, organizational: false)
-        client.put WriteRequest.new(path: "#{PATH}/#{id}", body: body_for(name, insights, organizational))
+      def update(id, **options)
+        client.put WriteRequest.new(path: "#{PATH}/#{id}", body: body(options))
       end
 
       def destroy(id)
@@ -32,8 +38,11 @@ module SyntageSdk
 
       private
 
-      def body_for(name, insights, organizational)
-        { name: name, insights: insights, organizational: organizational }
+      def body(options)
+        missing = REQUIRED_FIELDS - options.keys
+        raise ArgumentError, "missing keyword: #{missing.join ', '}" if missing.any?
+
+        DEFAULTS.merge options.slice(*FIELDS)
       end
     end
   end
