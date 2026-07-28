@@ -6,6 +6,79 @@ RSpec.describe SyntageSdk::Resources::Exports do
   let(:client) { instance_double SyntageSdk::Client, get: response, post: response }
   let(:response) { instance_double SyntageSdk::Response }
 
+  describe '#list' do
+    it 'gets the exports path' do
+      exports.list
+
+      expect(client).to have_received(:get).with('exports', anything)
+    end
+
+    it 'requests the JSON-LD representation' do
+      exports.list
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(headers: hash_including('Accept' => 'application/ld+json')))
+    end
+
+    it 'sends an empty query when no options are given' do
+      exports.list
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'sends the status filter' do
+      exports.list status: 'finished'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('status' => 'finished')))
+    end
+
+    it 'sends the format filter' do
+      exports.list format: 'pdf'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('format' => 'pdf')))
+    end
+
+    it 'sends the id filter' do
+      exports.list id: 'exp_1'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('id' => 'exp_1')))
+    end
+
+    it 'combines the status and format filters' do
+      exports.list status: 'finished', format: 'pdf'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: { 'status' => 'finished', 'format' => 'pdf' }))
+    end
+
+    it 'sends itemsPerPage when given' do
+      exports.list items_per_page: 50
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('itemsPerPage' => 50)))
+    end
+
+    it 'sends page when given' do
+      exports.list page: 2
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('page' => 2)))
+    end
+
+    it 'ignores unsupported filters' do
+      exports.list uri: '/entities'
+
+      expect(client).to have_received(:get).with(anything, hash_including(query: {}))
+    end
+
+    it 'returns the client response' do
+      expect(exports.list).to be(response)
+    end
+  end
+
   describe '#create' do
     it 'posts to the exports path' do
       exports.create format: 'csv', uri: '/entities'
