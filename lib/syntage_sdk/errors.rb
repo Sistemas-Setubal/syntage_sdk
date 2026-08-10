@@ -3,6 +3,8 @@ module SyntageSdk
 
   class ConfigurationError < Error; end
 
+  class DependencyError < Error; end
+
   class ApiError < Error
     attr_reader :metadata, :body
 
