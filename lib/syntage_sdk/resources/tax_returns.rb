@@ -31,6 +31,8 @@ module SyntageSdk
         orders:  ORDER_FIELDS
       ).freeze
 
+      ACK_RECEIPT = 'tax_return.ack_receipt'
+
       def list(entity_id:, **options)
         list_collection "entities/#{entity_id}/tax-returns", LIST, options
       end
@@ -45,6 +47,21 @@ module SyntageSdk
 
       def pdf(id)
         client.get "tax-returns/#{id}/pdf", headers: { 'Accept' => 'application/pdf' }
+      end
+
+      def amounts(id)
+        ack = ack_receipt_of retrieve(id).body
+        return [] unless ack
+
+        AckReceipt.parse PdfText.extract(Files.new(client).download(ack['id']).body)
+      end
+
+      private
+
+      def ack_receipt_of(body)
+        files = body['files'] || []
+
+        files.find { |file| file['type'] == ACK_RECEIPT }
       end
     end
   end

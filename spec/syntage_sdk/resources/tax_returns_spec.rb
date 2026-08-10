@@ -199,6 +199,66 @@ RSpec.describe SyntageSdk::Resources::TaxReturns do
     end
   end
 
+  describe '#amounts' do
+    let(:id) { 'a1fbecf9-0330-4821-886c-7d45da9c29f4' }
+    let(:file_id) { 'f0c1b2a3-0330-4821-886c-7d45da9c29f4' }
+    let(:record) { instance_double SyntageSdk::Response, body: body }
+    let(:pdf) { instance_double SyntageSdk::Response, body: 'PDF BYTES' }
+    let(:files) { [{ 'id' => file_id, 'type' => 'tax_return.ack_receipt' }] }
+    let(:body) { { 'files' => files } }
+
+    let(:text) { <<~TEXT }
+      Concepto de pago 1:   IVA retenciones
+      A cargo:                        6,933
+      Cantidad a pagar:               6,933
+    TEXT
+
+    before do
+      allow(client).to receive(:get).with("tax-returns/#{id}", anything).and_return record
+      allow(client).to receive(:get).with("files/#{file_id}/download", anything).and_return pdf
+      allow(SyntageSdk::PdfText).to receive(:extract).and_return text
+    end
+
+    it 'downloads the acknowledgement receipt of the tax return' do
+      tax_returns.amounts id
+
+      expect(client).to have_received(:get).with("files/#{file_id}/download", anything)
+    end
+
+    it 'extracts the text of the downloaded document' do
+      tax_returns.amounts id
+
+      expect(SyntageSdk::PdfText).to have_received(:extract).with('PDF BYTES')
+    end
+
+    it 'returns the parsed concepts' do
+      expect(tax_returns.amounts(id).first).to include(name: 'IVA retenciones', a_cargo: 6933)
+    end
+
+    it 'buckets each parsed concept' do
+      expect(tax_returns.amounts(id).first[:bucket]).to eq(:iva_retenciones)
+    end
+
+    it 'returns no concepts when the tax return has no acknowledgement receipt' do
+      files.clear
+
+      expect(tax_returns.amounts(id)).to be_empty
+    end
+
+    it 'returns no concepts when the tax return has no files at all' do
+      body.delete 'files'
+
+      expect(tax_returns.amounts(id)).to be_empty
+    end
+
+    it 'does not download anything when there is no acknowledgement receipt' do
+      files.clear
+      tax_returns.amounts id
+
+      expect(client).not_to have_received(:get).with("files/#{file_id}/download", anything)
+    end
+  end
+
   describe '#pdf' do
     let(:id) { 'a1fbecf9-0330-4821-886c-7d45da9c29f4' }
 
