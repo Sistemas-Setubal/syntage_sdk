@@ -3,7 +3,7 @@
 source 'https://rubygems.org'
 
 gem 'httparty', '~> 0.24'
-gem 'zeitwerk', '~> 2.6'
+gem 'zeitwerk', '~> 2.8'
 
 gem 'orenns-rubocop-rails', require: false, group: [:development]
 gem 'reek', require: false, group: [:development]
