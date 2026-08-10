@@ -10,6 +10,11 @@ to make traceability and usage control easy.
 ## Requirements
 
 - Ruby >= 3.4.0
+- `pdftotext` (package `poppler-utils`) — **only** for
+  [`tax_returns.amounts`](#tax-returns), the one method that reads a PDF. Every
+  other method is pure HTTP and needs nothing extra.
+
+Runtime dependencies are `httparty` (HTTP) and `zeitwerk` (autoloading).
 
 ## Installation
 
@@ -44,6 +49,10 @@ end
 | `base_url`     | Base URL; overrides the environment one when assigned | Based on the environment        |
 | `timeout`      | Read timeout in seconds                               | `30`                            |
 | `open_timeout` | Connection timeout in seconds                          | `10`                            |
+| `max_retries`  | Retries on `429` before raising `RateLimitError`      | `2`                             |
+
+`SyntageSdk.reset_configuration!` throws the configuration and the memoized client
+away and starts over — mostly useful to isolate global state between tests.
 
 The environment determines the base URL:
 
@@ -52,7 +61,8 @@ The environment determines the base URL:
 | `:development` | `https://api.sandbox.syntage.com` |
 | `:production`  | `https://api.syntage.com`         |
 
-Accessing the configuration and the authentication headers:
+Accessing the configuration and the authentication headers (`SyntageSdk.config` is
+an alias of `SyntageSdk.configuration`; both return the same memoized instance):
 
 ```ruby
 SyntageSdk.config.base_url # => "https://api.sandbox.syntage.com"
@@ -82,14 +92,70 @@ response.body        # parsed JSON
 response.status      # 200
 response.request_id  # value of X-Request-ID
 response.rate_limit  # SyntageSdk::RateLimit
-
-client.post('entities', body: { name: 'Acme', type: 'company' })
+response.success?    # status in 200..299
 ```
+
+`get` also takes a `headers:` hash that is merged over the configured ones, which
+is how the list methods ask for `application/ld+json` and how downloads accept any
+content type.
+
+Writes take a `WriteRequest` (a `Data` object holding the path and the body) rather
+than loose arguments:
+
+```ruby
+request = SyntageSdk::WriteRequest.new(path: 'entities', body: { name: 'Acme', type: 'company' })
+
+client.post(request)  # POST
+client.put(request)   # PUT, full replacement
+client.patch(request) # PATCH, sent as application/merge-patch+json
+client.delete('entities/a1fbec32-…')
+```
+
+In practice you rarely build these by hand: the resource objects below do it for
+you.
 
 ## Resources
 
 On top of the raw client, the SDK exposes resource objects that map domain
 actions to endpoints, so the calling app does not build paths or bodies by hand.
+
+Every entry point below returns a fresh resource object that reuses the global
+client. The ones taking an `entity_id` are bound to that entity for their whole
+lifetime; the rest take `entity_id:` per call when the endpoint needs it.
+
+| Entry point                              | What it covers                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| `SyntageSdk.entities`                    | Create, update, list and read entities                            |
+| `SyntageSdk.entity_tags`                 | Attach tags to entities                                           |
+| `SyntageSdk.tags`                        | The tag catalogue itself                                          |
+| `SyntageSdk.credentials`                 | Upload CIEC or e.firma credentials                                |
+| `SyntageSdk.extractions`                 | Launch and stop data extractions                                  |
+| `SyntageSdk.events`                      | The account's event feed                                          |
+| `SyntageSdk.invoices`                    | Invoices and their CFDI                                           |
+| `SyntageSdk.line_items`                  | Invoice line items                                                |
+| `SyntageSdk.credit_notes`                | Credit notes, issued and applied                                  |
+| `SyntageSdk.payments`                    | Payment complements                                               |
+| `SyntageSdk.batch_payments`              | Payment complements grouped by document                           |
+| `SyntageSdk.tax_returns`                 | Tax returns, their data and the **declared ISR/IVA**              |
+| `SyntageSdk.tax_summary(entity_id)`      | Client-side tax totals computed from invoices                     |
+| `SyntageSdk.tax_retentions`              | Withholding CFDI                                                  |
+| `SyntageSdk.tax_status`                  | Tax status (constancia de situación fiscal)                       |
+| `SyntageSdk.tax_compliance_checks`       | Compliance opinion (opinión de cumplimiento)                      |
+| `SyntageSdk.electronic_accounting`       | Electronic accounting filings                                     |
+| `SyntageSdk.insights(entity_id)`         | Analytics: metrics, accounting, concentration, products           |
+| `SyntageSdk.syntage_score(entity_id)`    | Syntage Score calculation                                         |
+| `SyntageSdk.sat_certificates(entity_id)` | SAT certificates and their expiry                                 |
+| `SyntageSdk.shareholders`                | Shareholders of an entity                                         |
+| `SyntageSdk.rpc_entities(entity_id)`     | Public Registry of Commerce records                               |
+| `SyntageSdk.rug(entity_id)`              | Movable-property guarantees (RUG)                                 |
+| `SyntageSdk.background_checks`           | Background checks and their records                               |
+| `SyntageSdk.company_verification_reports`| Company verification reports                                      |
+| `SyntageSdk.addresses`                   | Postal-code lookup                                                |
+| `SyntageSdk.schedulers`                  | Recurring extraction schedulers                                   |
+| `SyntageSdk.scheduler_rules`             | Rules that drive a scheduler                                      |
+| `SyntageSdk.reports`                     | Report layouts (which insights a report renders)                  |
+| `SyntageSdk.exports`                     | Export a collection to csv / xlsx / json                          |
+| `SyntageSdk.files`                       | File metadata and download                                        |
 
 ### Entities
 
@@ -617,6 +683,91 @@ Fetch the parsed data of a tax return (`GET /tax-returns/:id/data`) as JSON:
 response = SyntageSdk.tax_returns.data('91106968-…')
 response.body # the tax return data
 ```
+
+Read the ISR and IVA the taxpayer actually declared. Those amounts are not exposed
+by any JSON endpoint: they only exist inside the SAT acknowledgement receipt
+(`tax_return.ack_receipt`), so `#amounts` downloads that PDF and parses it. It
+returns one entry per declared concept, with the amounts as numbers and a `bucket`
+that groups the SAT concept names into `:isr`, `:isr_retenciones`, `:iva`,
+`:iva_retenciones` or `:otros`:
+
+```ruby
+SyntageSdk.tax_returns.amounts('91106968-…')
+# [{ name: 'IVA retenciones', bucket: :iva_retenciones,
+#    a_cargo: 6933, a_favor: nil, actualizacion: nil, recargos: nil,
+#    pagado_con_anterioridad: nil, cantidad_a_cargo: 6933,
+#    cantidad_a_favor: nil, cantidad_a_pagar: 6933 }, …]
+```
+
+`a_cargo` is the tax itself and `cantidad_a_cargo` the amount after surcharges and
+credits, which is why both are kept apart (same for `a_favor` / `cantidad_a_favor`).
+Fields missing from the receipt come back as `nil`, and a tax return without an
+acknowledgement receipt returns `[]`. Periods that ended with a credit balance
+report `a_favor` and no `a_cargo`; amended returns (`Complementaria`) add
+`actualizacion`, `recargos` and `pagado_con_anterioridad`. Note that the sandbox
+serves placeholder PDFs with no amounts in them — only production receipts carry
+real figures.
+
+This is the one method that shells out: it needs the `pdftotext` binary
+(`poppler-utils`) on the `PATH`, or `SYNTAGE_PDFTOTEXT` pointing at it. When it is
+missing, the call raises `SyntageSdk::DependencyError`.
+
+To build a month-by-month ISR/IVA table, list the entity's monthly returns and
+group each concept by its `bucket`:
+
+```ruby
+returns = SyntageSdk.tax_returns
+                    .list(entity_id: entity_id, interval_unit: 'Mensual', fiscal_year: 2026)
+                    .body['hydra:member']
+
+returns.each_with_object(Hash.new { |hash, key| hash[key] = Hash.new(0) }) do |record, totals|
+  SyntageSdk.tax_returns.amounts(record['id']).each do |concept|
+    totals[record['period']][concept[:bucket]] += concept[:a_cargo].to_i - concept[:a_favor].to_i
+  end
+end
+# => { 'Junio' => { isr: 0, isr_retenciones: 6500, iva: 0, iva_retenciones: 6933 }, … }
+```
+
+Mind that a single period can have several returns — one per SAT platform, plus
+any `Complementaria` — so summing them all double counts a corrected concept.
+Which one prevails is an accounting call, not a technical one.
+
+### Tax summary
+
+`SyntageSdk.tax_summary(entity_id)` is **not** an endpoint: it aggregates client
+side, paging through the entity's invoices and withholding CFDI for a year and
+adding up the taxes it finds in them.
+
+```ruby
+summary = SyntageSdk.tax_summary('a1fbec32-…')
+
+summary.yearly(year: 2025)
+# => { subtotal: 0.0, iva: 0.0, ieps: 0.0, ish: 0.0, ret_iva: 0.0, isr_ret: 0.0 }
+```
+
+`subtotal`, `iva` and `ieps` come from `items[].taxes[]` of the invoices (SAT codes
+`002` and `003`, `type: "transfer"`); `ret_iva` and `isr_ret` from
+`items[].taxType` / `retainedAmount` of the withholdings (`02` and `01`). `ish`
+maps to the invoice's `transferredTaxes.localTaxes` as the closest available
+approximation — no invoice with local taxes has shown up yet, so treat it as
+unconfirmed.
+
+`monthly` breaks the year down by month, pairing the ISR withheld from the
+entity against what each monthly tax return actually asked it to pay:
+
+```ruby
+summary.monthly(year: 2025)
+# => { 'Enero'   => { isr_retained: 0.0, tax_return_payment: 1_653.0 },
+#      'Febrero' => { isr_retained: 0.0, tax_return_payment: nil }, … }
+```
+
+`tax_return_payment` is `nil` when no return was filed for that month; when several
+were (complementarias), the most recent one wins.
+
+> **This is invoiced tax, not declared tax.** It ignores credits, provisional
+> payments, balances carried from earlier periods and anything deducted without a
+> CFDI, so it will not match the return. For what the taxpayer actually declared,
+> use `SyntageSdk.tax_returns.amounts` above. Use this one to contrast the two.
 
 ### Shareholders
 
@@ -1269,17 +1420,69 @@ response = SyntageSdk.scheduler_rules.destroy('e0a24894-…')
 response.status # 204
 ```
 
+### Reports
+
+A report is a **layout**: a named tree of the insights to render, and nothing
+else. It carries no entity, so the same report is reused across every entity in
+the organization.
+
+List the report layouts (`GET /reports`) as a JSON-LD (Hydra) collection. Ordering
+via `order: { created_at: }`, plus the usual cursor pagination:
+
+```ruby
+response = SyntageSdk.reports.list(order: { created_at: 'desc' })
+response.body['hydra:member']
+```
+
+Create one (`POST /reports`). `name:` and `insights:` are required — omitting
+either raises `ArgumentError` before any HTTP call. `insights:` is an ordered tree
+of entries (`type: 'insight'` or `type: 'group'`, the latter with `children`, and
+an optional `visible` flag); `organizational:` defaults to `false`:
+
+```ruby
+response = SyntageSdk.reports.create(
+  name:     'Credit review',
+  insights: [
+    { name: 'Overview', type: 'group', visible: true,
+      children: [{ name: 'summary', type: 'insight', insight: 'summary' }] }
+  ],
+  organizational: false # optional
+)
+
+response.body['id']
+```
+
+Read, replace and delete a layout (`GET`, `PUT` and `DELETE /reports/:id`).
+`update` is a full replacement, so it requires `name:` and `insights:` too:
+
+```ruby
+SyntageSdk.reports.retrieve('a1fbec32-…')
+SyntageSdk.reports.update('a1fbec32-…', name: 'Renamed', insights: insights)
+SyntageSdk.reports.destroy('a1fbec32-…')
+```
+
+A report carries no date range either: the period is chosen when the report is
+viewed, or per insight through their `from` / `to`. To get the rendered PDF,
+export it — `?exporting=true` is the only query param a report URI accepts:
+
+```ruby
+SyntageSdk.exports.create(
+  format: 'pdf',
+  uri:    "/entities/#{entity_id}/reports/#{report_id}?exporting=true"
+)
+```
+
 ### Exports
 
 Generate an export of a collection's data as a file (`POST /exports`, returns
-`202`). `format` (`csv`, `xlsx` or `json`) and `uri` (the collection to export,
-e.g. an entity's invoices) are required; `file_types` is optional and mapped to
-the API's `fileTypes` field:
+`202`). `format` (`csv`, `xlsx`, `json` or `pdf` — the last one for rendering a
+report) and `uri` (what to export, e.g. an entity's invoices) are required;
+`file_types` is optional and mapped to the API's `fileTypes` field:
 
 ```ruby
 response = SyntageSdk.exports.create(
-  format: 'csv',                                        # required: csv, xlsx or json
-  uri: '/entities/a1fbec32-…/invoices',                 # required, collection to export
+  format: 'csv',                                        # required: csv, xlsx, json or pdf
+  uri: '/entities/a1fbec32-…/invoices',                 # required, what to export
   file_types: ['invoice.cfdi.xml', 'invoice.cfdi.pdf'] # optional
 )
 
@@ -1490,6 +1693,7 @@ rate_limit.exceeded?          # => false
 | -------------------------------- | ------------------------------------------------------- |
 | `SyntageSdk::Error`              | Base class for every SDK error                          |
 | `SyntageSdk::ConfigurationError` | Invalid configuration (e.g. missing `api_key`)          |
+| `SyntageSdk::DependencyError`    | An external binary is missing (`pdftotext`, see tax returns) |
 | `SyntageSdk::ApiError`           | API failure; exposes `request_id` and `body`            |
 | `SyntageSdk::AuthenticationError`| `401` response; an `ApiError` for invalid credentials   |
 | `SyntageSdk::ForbiddenError`     | `403` response; the API key lacks permission            |
@@ -1528,6 +1732,17 @@ CI validates three things:
 bin/rubocop        # style
 bin/reek lib       # code smells
 bundle exec rspec  # tests with coverage (min. 95% line / 90% branch)
+```
+
+New files are picked up by Zeitwerk from the filename, so there is nothing to
+require: `resources/insights/metrics.rb` becomes
+`SyntageSdk::Resources::Insights::Metrics`.
+
+To try a change against a real account without installing the gem, put `lib` on
+the load path:
+
+```bash
+SYNTAGE_API_KEY=… ruby -Ilib -r syntage_sdk -e 'SyntageSdk.configure { |c| c.environment = :production }; …'
 ```
 
 ### Versioning and releases
