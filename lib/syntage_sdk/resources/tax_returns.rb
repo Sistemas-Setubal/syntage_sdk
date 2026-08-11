@@ -31,7 +31,7 @@ module SyntageSdk
         orders:  ORDER_FIELDS
       ).freeze
 
-      ACK_RECEIPT = 'tax_return.ack_receipt'
+      FILES = { ack_receipt: 'tax_return.ack_receipt', transcript: 'tax_return.transcript' }.freeze
 
       def list(entity_id:, **options)
         list_collection "entities/#{entity_id}/tax-returns", LIST, options
@@ -50,18 +50,30 @@ module SyntageSdk
       end
 
       def amounts(id)
-        ack = ack_receipt_of retrieve(id).body
+        ack = file_of retrieve(id).body, :ack_receipt
         return [] unless ack
 
-        AckReceipt.parse PdfText.extract(Files.new(client).download(ack['id']).body)
+        AckReceipt.parse text_of(ack)
+      end
+
+      def determination(id)
+        transcript = file_of retrieve(id).body, :transcript
+        return nil unless transcript
+
+        Transcript.parse text_of(transcript)
       end
 
       private
 
-      def ack_receipt_of(body)
+      def file_of(body, kind)
+        type = FILES.fetch kind
         files = body['files'] || []
 
-        files.find { |file| file['type'] == ACK_RECEIPT }
+        files.find { |file| file['type'] == type }
+      end
+
+      def text_of(file)
+        PdfText.extract Files.new(client).download(file['id']).body
       end
     end
   end
