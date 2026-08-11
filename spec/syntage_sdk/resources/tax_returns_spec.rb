@@ -259,6 +259,61 @@ RSpec.describe SyntageSdk::Resources::TaxReturns do
     end
   end
 
+  describe '#determination' do
+    let(:id) { 'a1fbecf9-0330-4821-886c-7d45da9c29f4' }
+    let(:file_id) { 'f0c1b2a3-0330-4821-886c-7d45da9c29f4' }
+    let(:record) { instance_double SyntageSdk::Response, body: body }
+    let(:pdf) { instance_double SyntageSdk::Response, body: 'PDF BYTES' }
+    let(:files) { [{ 'id' => file_id, 'type' => 'tax_return.transcript' }] }
+    let(:body) { { 'files' => files } }
+
+    let(:text) { <<~TEXT }
+      TOTAL DE INGRESOS ACUMULABLES                               4,111,834
+      RESULTADO FISCAL                                                    0
+    TEXT
+
+    before do
+      allow(client).to receive(:get).with("tax-returns/#{id}", anything).and_return record
+      allow(client).to receive(:get).with("files/#{file_id}/download", anything).and_return pdf
+      allow(SyntageSdk::PdfText).to receive(:extract).and_return text
+    end
+
+    it 'downloads the transcript of the tax return' do
+      tax_returns.determination id
+
+      expect(client).to have_received(:get).with("files/#{file_id}/download", anything)
+    end
+
+    it 'extracts the text of the downloaded document' do
+      tax_returns.determination id
+
+      expect(SyntageSdk::PdfText).to have_received(:extract).with('PDF BYTES')
+    end
+
+    it 'returns the parsed determination' do
+      expect(tax_returns.determination(id)).to include accruable_income: 4_111_834, taxable_result: 0
+    end
+
+    it 'returns nil when the tax return has no transcript' do
+      files.clear
+
+      expect(tax_returns.determination(id)).to be_nil
+    end
+
+    it 'returns nil when the tax return has no files at all' do
+      body.delete 'files'
+
+      expect(tax_returns.determination(id)).to be_nil
+    end
+
+    it 'does not download anything when there is no transcript' do
+      files.clear
+      tax_returns.determination id
+
+      expect(client).not_to have_received(:get).with("files/#{file_id}/download", anything)
+    end
+  end
+
   describe '#pdf' do
     let(:id) { 'a1fbecf9-0330-4821-886c-7d45da9c29f4' }
 
