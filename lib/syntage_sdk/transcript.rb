@@ -45,7 +45,9 @@ module SyntageSdk
       return base if FIELDS.key? base
 
       joined = "#{base} #{continuation index}".strip
-      FIELDS.key?(joined) ? joined : base
+      return joined if FIELDS.key? joined
+
+      base
     end
 
     def continuation(index)
