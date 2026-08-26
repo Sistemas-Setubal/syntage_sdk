@@ -128,7 +128,7 @@ lifetime; the rest take `entity_id:` per call when the endpoint needs it.
 | `SyntageSdk.entities`                    | Create, update, list and read entities                            |
 | `SyntageSdk.entity_tags`                 | Attach tags to entities                                           |
 | `SyntageSdk.tags`                        | The tag catalogue itself                                          |
-| `SyntageSdk.credentials`                 | Upload CIEC or e.firma credentials                                |
+| `SyntageSdk.credentials`                 | Upload, list, revalidate and delete SAT credentials               |
 | `SyntageSdk.extractions`                 | Launch and stop data extractions                                  |
 | `SyntageSdk.events`                      | The account's event feed                                          |
 | `SyntageSdk.invoices`                    | Invoices and their CFDI                                           |
@@ -320,6 +320,60 @@ response.body['rfc'] # derived from the certificate
 All arguments are required keyword arguments: omitting any raises an
 `ArgumentError` before any request is made. For e.firma the SDK uses
 `Base64.strict_encode64` (no line breaks), so do not pre-encode the inputs.
+
+List credentials (`GET /credentials`) as a JSON-LD collection:
+
+```ruby
+response = SyntageSdk.credentials.list(
+  type: 'efirma',                        # ciec · efirma
+  rfc: 'LSI240429PHA',                   # exact match, case-sensitive
+  status: 'valid',
+  created_at: { before: '2026-06-01' },
+  updated_at: { after: '2026-01-01' },
+  order: { updated_at: 'desc' },         # or a plain string, ordered by createdAt
+  items_per_page: 50
+)
+
+response.body['hydra:member'] # the credentials
+```
+
+Every argument is optional; unknown keys are ignored. `order` accepts
+`created_at`, `updated_at` or `id`. Both paging styles work: offset (`page` /
+`items_per_page`, with `hydra:totalItems`) and cursor (`cursor: true`, which
+navigates through `id_lt` / `id_gt` — see [Events](#events) for the details,
+credentials behave the same way).
+
+> The API reference documents four `deactivatedAt[...]` filters for this
+> endpoint. That field does not exist on the resource and the API **silently
+> ignores** those params, returning unfiltered results rather than an error, so
+> the SDK does not expose them. The reference also calls `rfc` a partial match;
+> it is exact.
+
+Retrieve a single credential by id (`GET /credentials/:id`):
+
+```ruby
+response = SyntageSdk.credentials.retrieve('91106968-…')
+response.body['status'] # pending · valid · invalid, etc.
+```
+
+Ask the SAT to validate a credential again (`POST /credentials/:id/revalidate`,
+returns `202`). It only applies to credentials that are not already valid — for
+a valid one the API raises a `ValidationError` (`400`, `detail: "Credential is
+already valid"`) and leaves the credential untouched — and `429` when
+revalidated too often:
+
+```ruby
+response = SyntageSdk.credentials.revalidate('91106968-…')
+response.status # 202
+```
+
+Delete a credential (`DELETE /credentials/:id`, returns `204`) so it can no
+longer be used for new extraction work:
+
+```ruby
+response = SyntageSdk.credentials.destroy('91106968-…')
+response.status # 204
+```
 
 ### Extractions
 
