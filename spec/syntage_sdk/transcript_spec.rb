@@ -40,7 +40,7 @@ RSpec.describe SyntageSdk::Transcript do
     end
 
     it 'always answers with the full set of fields' do
-      expect(described_class.parse(determination).keys).to eq described_class::FIELDS.values
+      expect(described_class.parse(determination).keys).to eq described_class::EMPTY.keys
     end
 
     context 'when the label is split across two lines' do
@@ -88,6 +88,88 @@ RSpec.describe SyntageSdk::Transcript do
 
       it 'does not mistake the date for an amount' do
         expect(described_class.parse(header)[:taxable_result]).to eq 42
+      end
+    end
+
+    context 'when the document declares the profit coefficient' do
+      let(:coefficient) { <<~TEXT }
+        COEFICIENTE DE UTILIDAD DEL EJERCICIO                             0.0345
+      TEXT
+
+      it 'keeps the coefficient as a decimal' do
+        expect(described_class.parse(coefficient)[:profit_coefficient]).to eql 0.0345
+      end
+    end
+
+    context 'when the coefficient base lives in an indented block' do
+      let(:base) { <<~TEXT }
+                                                    DATOS ADICIONALES
+
+        COEFICIENTE DE UTILIDAD DEL EJERCICIO                             0.0000
+
+
+           TOTAL DE INGRESOS ACUMULABLES                             127,504,359
+
+
+           AJUSTE ANUAL POR INFLACIÓN                                    134,020
+           ACUMULABLE
+
+
+           INGRESOS NOMINALES PARA COEFICIENTE                      127,370,339
+           DE UTILIDAD
+
+
+           PÉRDIDA FISCAL PARA COEFICIENTE DE                           972,804
+           UTILIDAD
+      TEXT
+
+      it 'reads the nominal income of the indented concept' do
+        expect(described_class.parse(base)[:nominal_income_for_coefficient]).to eq 127_370_339
+      end
+
+      it 'reads the inflation adjustment of the indented concept' do
+        expect(described_class.parse(base)[:inflation_adjustment]).to eq 134_020
+      end
+
+      it 'reads the tax loss used for the coefficient' do
+        expect(described_class.parse(base)[:tax_loss_for_coefficient]).to eq 972_804
+      end
+
+      it 'still ignores the indented copy of a top level concept' do
+        expect(described_class.parse(base)[:accruable_income]).to be_nil
+      end
+    end
+
+    context 'when the coefficient authorization is answered' do
+      let(:denied) { <<~TEXT }
+        ¿TE AUTORIZARON APLICAR UN                NO
+        COEFICIENTE DE UTILIDAD MENOR EN
+        PAGOS PROVISIONALES AL DETERMINADO
+        EN EL EJERCICIO?
+      TEXT
+
+      let(:granted) { <<~TEXT }
+        ¿TE AUTORIZARON APLICAR UN                SÍ
+        COEFICIENTE DE UTILIDAD MENOR EN
+        PAGOS PROVISIONALES AL DETERMINADO
+        EN EL EJERCICIO?
+      TEXT
+
+      let(:unrelated) { <<~TEXT }
+        ¿ESTÁS OBLIGADO A CALCULAR Y PAGAR        NO
+        PTU DEL EJERCICIO QUE DECLARA?
+      TEXT
+
+      it 'reads a negative answer as false' do
+        expect(described_class.parse(denied)[:lower_coefficient_authorized]).to be false
+      end
+
+      it 'reads an affirmative answer as true' do
+        expect(described_class.parse(granted)[:lower_coefficient_authorized]).to be true
+      end
+
+      it 'ignores a question the transcript asks about something else' do
+        expect(described_class.parse(unrelated)[:lower_coefficient_authorized]).to be_nil
       end
     end
 
