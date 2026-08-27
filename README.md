@@ -138,6 +138,7 @@ lifetime; the rest take `entity_id:` per call when the endpoint needs it.
 | `SyntageSdk.batch_payments`              | Payment complements grouped by document                           |
 | `SyntageSdk.tax_returns`                 | Tax returns, their data and the **declared ISR/IVA**              |
 | `SyntageSdk.tax_summary(entity_id)`      | Client-side tax totals computed from invoices                     |
+| `SyntageSdk.invoice_totals(entity_id)`   | Client-side yearly invoicing totals, issued vs received           |
 | `SyntageSdk.tax_retentions`              | Withholding CFDI                                                  |
 | `SyntageSdk.tax_status`                  | Tax status (constancia de situación fiscal)                       |
 | `SyntageSdk.tax_compliance_checks`       | Compliance opinion (opinión de cumplimiento)                      |
@@ -822,6 +823,54 @@ were (complementarias), the most recent one wins.
 > payments, balances carried from earlier periods and anything deducted without a
 > CFDI, so it will not match the return. For what the taxpayer actually declared,
 > use `SyntageSdk.tax_returns.amounts` above. Use this one to contrast the two.
+
+### Invoice totals
+
+`SyntageSdk.invoice_totals(entity_id)` is the other client-side aggregate: it pages
+through a calendar year of invoices and adds up what the entity billed and what it was
+billed, keeping the two sides apart.
+
+```ruby
+totals = SyntageSdk.invoice_totals('a1fbec32-…').annual(year: 2025)
+
+totals[:issued]
+# => { income_subtotal: 4_098_710.54, income_discount: 0.0, credited_amount: 17_306.01,
+#      credit_notes: 5_190.01, net: 4_081_404.53, invoices_count: 196 }
+
+totals[:received] # same keys, for the invoices issued *to* the entity
+```
+
+Only `VIGENTE` invoices are asked for, so cancelled CFDI never reach the totals. Of
+those, CFDI de ingreso (`type: "I"`) build `income_subtotal` and `income_discount`;
+complementos de pago (`"P"`) and recibos de nómina (`"N"`) are skipped, the first
+because they restate income already invoiced and the second because it is a deduction
+rather than income. `invoices_count` counts only what was added up.
+
+Credit is counted twice over, because there are two honest ways to date it:
+
+- `credited_amount` sums `subtotalCreditedAmount` of the year's income invoices — the
+  credit that reduces *this year's* invoices, whenever the note itself was issued.
+- `credit_notes` sums the notas de crédito (`type: "E"`) *issued* during the year, net
+  of their own discount, whoever they correct.
+
+`net = income_subtotal - income_discount - credited_amount` uses the first, which is
+what the API's own `insights.metrics.invoicing_annual_comparison` does: for a real
+entity the two agree to the cent (`totalSalesRevenue`, `incomeCreditNotes`,
+`totalExpenses`, `expensesDiscounts`, `expensesCreditNotes` all reconcile). `credit_notes`
+is reported alongside but never subtracted, so nothing is discounted twice.
+
+The year is bounded in local time (`-06:00`), not naively. A CFDI's `Fecha` is local and
+Syntage stores `issuedAt` converted to UTC, so a plain `"#{year}-01-01"` window runs six
+hours late — it takes in the tail of December 31st of the year before and drops the tail
+of December 31st of this one. Both were seen in production data.
+
+> **This is invoiced, not declared.** `issued[:net]` is the closest CFDI-based figure
+> to *ingresos acumulables* and `received[:net]` to *deducciones autorizadas*, but they
+> will not match the annual return: cash-basis taxpayers (PFAE) declare what was
+> collected rather than what was billed, non-deductible expenses still arrive as CFDI,
+> and payroll taxes and other outlays are deducted without one. For the declared side
+> use `SyntageSdk.tax_returns.determination`, which parses those two figures out of the
+> annual return's transcript, and contrast the two.
 
 ### Shareholders
 
