@@ -685,12 +685,22 @@ per fiscal year; `trial_balance` returns the trial-balance accounts.
 #### Concentration
 
 Concentration insights hang off `insights.concentration`. `invoicing` requires a
-`type:` argument; `customer` and `supplier` accept only `from:` / `to:`:
+`type:` argument; `customer` and `supplier` accept `from:` / `to:` plus `limit:`,
+`offset:` and `grain:`:
 
 ```ruby
 insights.concentration.invoicing(type: 'issued')  # GET .../insights/invoicing-concentration
 insights.concentration.customer                    # GET .../insights/customer-concentration
 insights.concentration.supplier                    # GET .../insights/supplier-concentration
+```
+
+`customer` and `supplier` return the counterparties ranked by total, already
+sorted descending, and default to the **first 10 only** — page through the rest
+with `limit:` / `offset:`. `grain:` (`month` — the default — `quarter` or `year`)
+sets the buckets of each item's `transactions`:
+
+```ruby
+insights.concentration.customer(limit: 25, offset: 25, grain: 'quarter')
 ```
 
 #### Products
