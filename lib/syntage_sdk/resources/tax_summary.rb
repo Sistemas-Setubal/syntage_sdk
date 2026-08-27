@@ -5,7 +5,7 @@ require 'date'
 module SyntageSdk
   module Resources
     class TaxSummary < EntityScopedResource
-      PAGE_SIZE = 200
+      include CursorPaging
 
       MONTH_NAMES = %w[
         Enero Febrero Marzo Abril Mayo Junio
@@ -123,27 +123,6 @@ module SyntageSdk
         return 1 if tax_return['type'].to_s.start_with? 'Complementaria'
 
         0
-      end
-
-      def each_page(resource, date_filter)
-        cursor = nil
-
-        loop do
-          members = fetch_page resource, date_filter, cursor
-          break if members.empty?
-
-          members.each { |member| yield member }
-          break if members.size < PAGE_SIZE
-
-          cursor = members.last['id']
-        end
-      end
-
-      def fetch_page(resource, date_filter, cursor)
-        options = { entity_id: entity_id, items_per_page: PAGE_SIZE, cursor: true, issued_at: date_filter }
-        options[:id_gt] = cursor if cursor
-
-        resource.list(**options).body['hydra:member'] || []
       end
     end
   end

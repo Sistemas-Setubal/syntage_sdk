@@ -100,6 +100,10 @@ module SyntageSdk
       Resources::TaxSummary.new entity_id
     end
 
+    def invoice_totals(entity_id)
+      Resources::InvoiceTotals.new entity_id
+    end
+
     def rpc_entities(entity_id)
       Resources::RpcEntities.new entity_id
     end

@@ -34,7 +34,7 @@ RSpec.describe SyntageSdk::Resources::TaxSummary do
   end
 
   def page_index(query)
-    return 1 if query['id[gt]']
+    return 1 if query['id[lt]']
 
     0
   end
@@ -132,7 +132,7 @@ RSpec.describe SyntageSdk::Resources::TaxSummary do
       tax_summary.yearly year: year
 
       expect(client).to have_received(:get)
-        .with("entities/#{entity_id}/invoices", hash_including(query: hash_including('id[gt]' => 'inv-199')))
+        .with("entities/#{entity_id}/invoices", hash_including(query: hash_including('id[lt]' => 'inv-199')))
     end
 
     it 'requests a second page of tax retentions once a full page is returned' do
@@ -141,7 +141,7 @@ RSpec.describe SyntageSdk::Resources::TaxSummary do
       tax_summary.yearly year: year
 
       expect(client).to have_received(:get)
-        .with("entities/#{entity_id}/tax-retentions", hash_including(query: hash_including('id[gt]' => 'ret-199')))
+        .with("entities/#{entity_id}/tax-retentions", hash_including(query: hash_including('id[lt]' => 'ret-199')))
     end
 
     it 'returns a hash with every tax total' do
