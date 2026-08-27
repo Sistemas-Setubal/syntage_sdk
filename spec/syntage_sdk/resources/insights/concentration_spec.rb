@@ -72,6 +72,34 @@ RSpec.describe SyntageSdk::Resources::Insights::Concentration do
         .with(anything, hash_including(query: hash_excluding('options[to]')))
     end
 
+    it 'maps limit to the options[limit] query param' do
+      concentration.customer limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[limit]' => 25)))
+    end
+
+    it 'maps offset to the options[offset] query param' do
+      concentration.customer offset: 2
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[offset]' => 2)))
+    end
+
+    it 'maps grain to the options[grain] query param' do
+      concentration.customer grain: 'quarter'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[grain]' => 'quarter')))
+    end
+
+    it 'omits ranking filters that are not given' do
+      concentration.customer limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[offset]')))
+    end
+
     it 'returns the client response' do
       expect(concentration.customer).to be(response)
     end
@@ -103,6 +131,34 @@ RSpec.describe SyntageSdk::Resources::Insights::Concentration do
 
       expect(client).to have_received(:get)
         .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'maps limit to the options[limit] query param' do
+      concentration.supplier limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[limit]' => 25)))
+    end
+
+    it 'maps offset to the options[offset] query param' do
+      concentration.supplier offset: 2
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[offset]' => 2)))
+    end
+
+    it 'maps grain to the options[grain] query param' do
+      concentration.supplier grain: 'quarter'
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[grain]' => 'quarter')))
+    end
+
+    it 'omits ranking filters that are not given' do
+      concentration.supplier limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[offset]')))
     end
 
     it 'returns the client response' do
