@@ -6,16 +6,10 @@ module SyntageSdk
       include CursorPaging
 
       ACTIVE = 'VIGENTE'
-
-      # Complementos de pago ("P") restate income already invoiced and recibos de nómina
-      # ("N") are a deduction, so neither belongs in these totals.
       TYPES = { 'I' => :income, 'E' => :credit_note }.freeze
 
       ROLES = { issued: :is_issuer, received: :is_receiver }.freeze
 
-      # A CFDI's Fecha is local time and Syntage stores issuedAt converted to UTC, so a
-      # naive "#{year}-01-01" window is six hours late: it takes in the tail of December
-      # 31st of the year before and drops the tail of December 31st of this one.
       ZONE_OFFSET = '-06:00'
 
       EMPTY = { income_subtotal: 0.0, income_discount: 0.0, credited_amount: 0.0, credit_notes: 0.0,
@@ -62,8 +56,6 @@ module SyntageSdk
         end
       end
 
-      # Credits are taken from the invoice they correct, not from the notes issued this
-      # year, so a note that lands in January still reduces the year it belongs to.
       def income_of(invoice, subtotal, discount)
         { income_subtotal: subtotal, income_discount: discount,
           credited_amount: invoice['subtotalCreditedAmount'].to_f }
