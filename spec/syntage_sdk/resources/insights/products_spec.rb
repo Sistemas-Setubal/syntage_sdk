@@ -34,6 +34,27 @@ RSpec.describe SyntageSdk::Resources::Insights::Products do
         .with(anything, hash_including(query: hash_excluding('options[to]')))
     end
 
+    it 'maps limit to the options[limit] query param' do
+      products.sold limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[limit]' => 25)))
+    end
+
+    it 'maps offset to the options[offset] query param' do
+      products.sold offset: 100
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[offset]' => 100)))
+    end
+
+    it 'omits ranking filters that are not given' do
+      products.sold limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[offset]')))
+    end
+
     it 'returns the client response' do
       expect(products.sold).to be(response)
     end
@@ -65,6 +86,27 @@ RSpec.describe SyntageSdk::Resources::Insights::Products do
 
       expect(client).to have_received(:get)
         .with(anything, hash_including(query: hash_excluding('options[to]')))
+    end
+
+    it 'maps limit to the options[limit] query param' do
+      products.bought limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[limit]' => 25)))
+    end
+
+    it 'maps offset to the options[offset] query param' do
+      products.bought offset: 100
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('options[offset]' => 100)))
+    end
+
+    it 'omits ranking filters that are not given' do
+      products.bought limit: 25
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_excluding('options[offset]')))
     end
 
     it 'returns the client response' do
