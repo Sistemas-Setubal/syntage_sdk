@@ -150,6 +150,7 @@ lifetime; the rest take `entity_id:` per call when the endpoint needs it.
 | `SyntageSdk.rpc_entities(entity_id)`     | Public Registry of Commerce records                               |
 | `SyntageSdk.rug(entity_id)`              | Movable-property guarantees (RUG)                                 |
 | `SyntageSdk.background_checks`           | Background checks and their records                               |
+| `SyntageSdk.bil`                         | BIL reports of an entity                                          |
 | `SyntageSdk.company_verification_reports`| Company verification reports                                      |
 | `SyntageSdk.addresses`                   | Postal-code lookup                                                |
 | `SyntageSdk.schedulers`                  | Recurring extraction schedulers                                   |
@@ -1376,6 +1377,37 @@ response = SyntageSdk.background_checks.records(
   category: 'criminal_record'
 )
 response.body['hydra:member'] # array of records
+```
+
+### BIL
+
+List an entity's BIL reports (`GET /entities/:entity_id/datasources/bil/reports`) as a
+JSON-LD (Hydra) collection. `entity_id:` is required. Filters: `id_lt` / `id_gt` (cursor
+pagination); ordering via `order: { created_at: }`.
+
+The SDK validates `items_per_page` client-side: it must be an integer between 1 and 100,
+otherwise `ArgumentError` is raised before any request is made.
+
+```ruby
+response = SyntageSdk.bil.list(
+  entity_id:      '91106968-…',
+  items_per_page: 50,
+  order:          { created_at: 'desc' }
+)
+
+body = response.body
+body['hydra:member'] # array of BIL reports
+body['hydra:view']   # cursor navigation links
+
+# next page, after the last id seen
+SyntageSdk.bil.list(entity_id: '91106968-…', id_lt: body['hydra:member'].last['id'])
+```
+
+Retrieve a single BIL report by id (`GET /datasources/bil/reports/:id`):
+
+```ruby
+response = SyntageSdk.bil.retrieve('91106968-…')
+response.body # the BIL report
 ```
 
 ### Company verification reports

@@ -88,6 +88,10 @@ module SyntageSdk
       Resources::BackgroundChecks.new
     end
 
+    def bil
+      Resources::Bil.new
+    end
+
     def company_verification_reports
       Resources::CompanyVerificationReports.new
     end
