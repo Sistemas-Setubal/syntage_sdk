@@ -49,10 +49,33 @@ RSpec.describe SyntageSdk::Resources::Bil do
     end
 
     it 'maps items_per_page to the camelCase param' do
-      bil.list entity_id: 'ent_123', items_per_page: 1000
+      bil.list entity_id: 'ent_123', items_per_page: 100
 
       expect(client).to have_received(:get)
-        .with(anything, hash_including(query: hash_including('itemsPerPage' => 1000)))
+        .with(anything, hash_including(query: hash_including('itemsPerPage' => 100)))
+    end
+
+    it 'rejects items_per_page above 100 before calling the API' do
+      expect { bil.list entity_id: 'ent_123', items_per_page: 101 }
+        .to raise_error ArgumentError, /between 1 and 100/
+      expect(client).not_to have_received(:get)
+    end
+
+    it 'rejects items_per_page below 1' do
+      expect { bil.list entity_id: 'ent_123', items_per_page: 0 }
+        .to raise_error ArgumentError, /between 1 and 100/
+    end
+
+    it 'rejects a non-integer items_per_page' do
+      expect { bil.list entity_id: 'ent_123', items_per_page: '50' }
+        .to raise_error ArgumentError, /got "50"/
+    end
+
+    it 'accepts items_per_page of 1' do
+      bil.list entity_id: 'ent_123', items_per_page: 1
+
+      expect(client).to have_received(:get)
+        .with(anything, hash_including(query: hash_including('itemsPerPage' => 1)))
     end
 
     it 'enables cursor pagination when cursor: true' do
