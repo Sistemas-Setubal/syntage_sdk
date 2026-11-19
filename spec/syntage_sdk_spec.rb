@@ -49,6 +49,16 @@ RSpec.describe SyntageSdk do
     end
   end
 
+  describe '.bil' do
+    it 'returns a Bil resource' do
+      expect(described_class.bil).to be_a(SyntageSdk::Resources::Bil)
+    end
+
+    it 'returns a fresh resource on every call' do
+      expect(described_class.bil).not_to equal(described_class.bil)
+    end
+  end
+
   describe '.reset_configuration!' do
     it 'replaces the configuration with a fresh instance' do
       original = described_class.configuration
